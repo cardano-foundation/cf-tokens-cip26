@@ -28,7 +28,7 @@
     </licenses>
 
     <properties>
-        <revision>0.0.1</revision>
+        <revision>1.0.0-SNAPSHOT</revision>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <version.maven-compiler-plugin>3.10.0</version.maven-compiler-plugin>
         <verison.maven-surefire-plugin>3.0.0-M5</verison.maven-surefire-plugin>
