@@ -4,9 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import lombok.extern.log4j.Log4j2;
-import org.bouncycastle.jcajce.provider.digest.Blake2b;
 import org.bouncycastle.math.ec.rfc8032.Ed25519;
 import org.bouncycastle.util.encoders.Hex;
+import org.cardanofoundation.metadatatools.core.crypto.Hashing;
 import org.cardanofoundation.metadatatools.core.crypto.keys.Key;
 import org.cardanofoundation.metadatatools.core.model.AttestationSignature;
 import org.cardanofoundation.metadatatools.core.model.PolicyScript;
@@ -16,6 +16,8 @@ import org.cardanofoundation.metadatatools.core.model.TokenMetadata;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
+
 
 @Log4j2
 public class TokenMetadataCreator {
@@ -51,16 +53,11 @@ public class TokenMetadataCreator {
                 }
                 for (final AttestationSignature attestationSignature : entry.getValue().getSignatures()) {
                     final ObjectMapper objectMapper = new ObjectMapper(new CBORFactory());
-                    final Blake2b.Blake2b256 blake2b = new Blake2b.Blake2b256();
-                    final byte[] subjectHash = blake2b.digest(objectMapper.writeValueAsBytes(metadata.getSubject()));
-                    final byte[] propertyNameHash = blake2b.digest(objectMapper.writeValueAsBytes(entry.getKey()));
-                    final byte[] valueHash = blake2b.digest(objectMapper.writeValueAsBytes(entry.getValue().getValue()));
-                    final byte[] sequenceNumberHash = blake2b.digest(objectMapper.writeValueAsBytes(entry.getValue().getSequenceNumber()));
-                    blake2b.update(subjectHash);
-                    blake2b.update(propertyNameHash);
-                    blake2b.update(valueHash);
-                    blake2b.update(sequenceNumberHash);
-                    final byte[] propertyHash = blake2b.digest();
+                    final byte[] propertyHash = Hashing.blake2b256Digest(List.of(
+                            Hashing.blake2b256Digest(objectMapper.writeValueAsBytes(metadata.getSubject())),
+                            Hashing.blake2b256Digest(objectMapper.writeValueAsBytes(entry.getKey())),
+                            Hashing.blake2b256Digest(objectMapper.writeValueAsBytes(entry.getValue().getValue())),
+                            Hashing.blake2b256Digest(objectMapper.writeValueAsBytes(entry.getValue().getSequenceNumber()))));
                     final byte[] signatureRaw = Hex.decode(attestationSignature.getSignature());
                     final boolean result = Ed25519.verify(signatureRaw, 0, verificationKey.getRawKeyBytes(), 0, propertyHash, 0, propertyHash.length);
                     if (!result) {
@@ -80,11 +77,28 @@ public class TokenMetadataCreator {
         final ValidationResult resultForBase = validateTokenMetadata(base, verificationKey);
         if (resultForLatest.isValid() && resultForBase.isValid()) {
             final ValidationResult validationResult = new ValidationResult();
-            //if ()
-            //820182018282051a03347d8d8200581c39a1df51147b6de6689a4727846962fb6540c3a3c7859a1a79b9420f
-            //820182018282051a033eb1be8200581c39a1df51147b6de6689a4727846962fb6540c3a3c7859a1a79b9420f
-            // compare base to latest: check sequence numbers
-            // compare base to latest: if base has signatures and latest not --> this is an error
+            if (!latest.getSubject().equalsIgnoreCase(base.getSubject())) {
+                validationResult.addValidationError("Subject of updated metadata differs from subject of base metadata.");
+            }
+            if (!latest.getPolicy().equalsIgnoreCase(base.getPolicy())) {
+                validationResult.addValidationError("Policy of updated metadata differs from policy of base metadata.");
+            }
+            if (!latest.getProperties().keySet().containsAll(base.getProperties().keySet())) {
+                validationResult.addValidationError("Missing properties in updated metadata that were available in previous.");
+            }
+            latest.getProperties().forEach(new BiConsumer<String, TokenMetadataProperty<?>>() {
+                @Override
+                public void accept(final String propertyKey, final TokenMetadataProperty<?> propertyValue) {
+                    if (base.getProperties().containsKey(propertyKey)) {
+                        final TokenMetadataProperty<?> baseProperty = base.getProperties().get(propertyKey);
+                        if (baseProperty.getSequenceNumber() >= propertyValue.getSequenceNumber()) {
+                            validationResult.addValidationError(String.format(
+                                    "Sequence number (%d) for property %s is not greater than the sequence number (%d) of the base property.",
+                                    propertyValue.getSequenceNumber(), propertyKey, baseProperty.getSequenceNumber()));
+                        }
+                    }
+                }
+            });
             return validationResult;
         } else {
             return ValidationResult.mergeResults(List.of(resultForBase, resultForLatest));
@@ -122,17 +136,11 @@ public class TokenMetadataCreator {
 
         try {
             final ObjectMapper objectMapper = new ObjectMapper(new CBORFactory());
-            final byte[] cborValue = objectMapper.writeValueAsBytes(property.getValue());
-            final byte[] cborSequenceNumber = objectMapper.writeValueAsBytes(property.getSequenceNumber());
-
-            final Blake2b.Blake2b256 blake2b = new Blake2b.Blake2b256();
-            final byte[] cborValueHash = blake2b.digest(cborValue);
-            final byte[] cborSequenceNumberHash = blake2b.digest(cborSequenceNumber);
-            blake2b.update(subjectHash);
-            blake2b.update(propertyNameHash);
-            blake2b.update(cborValueHash);
-            blake2b.update(cborSequenceNumberHash);
-            final byte[] propertyHash = blake2b.digest();
+            final byte[] propertyHash = Hashing.blake2b256Digest(List.of(
+                    subjectHash,
+                    propertyNameHash,
+                    Hashing.blake2b256Digest(objectMapper.writeValueAsBytes(property.getValue())),
+                    Hashing.blake2b256Digest(objectMapper.writeValueAsBytes(property.getSequenceNumber()))));
             final byte[] signature = signingKey.sign(propertyHash);
             property.addOrUpdateSignature(Hex.toHexString(verificationKey.getRawKeyBytes()), Hex.toHexString(signature));
         } catch (final IOException e) {
@@ -150,25 +158,17 @@ public class TokenMetadataCreator {
         if (!signingKey.getKeyType().isSigningKey()) {
             throw new IllegalArgumentException("Given key cannot be used for signing.");
         }
-        if (propertyName == null) {
-            throw new IllegalArgumentException("propertyName cannot be null.");
-        }
-        final String propertyNameSanitized = TokenMetadata.sanitizePropertyName(propertyName);
-        if (propertyNameSanitized.isEmpty()) {
-            throw new IllegalArgumentException("propertyName cannot be empty or blank.");
+        if (propertyName == null || propertyName.isBlank()) {
+            throw new IllegalArgumentException("propertyName cannot be null or blank");
         }
 
-        final TokenMetadataProperty<?> metadataProperty = input.getProperties().getOrDefault(propertyNameSanitized, null);
+        final TokenMetadataProperty<?> metadataProperty = input.getProperties().getOrDefault(propertyName, null);
         if (metadataProperty != null) {
             try {
-                final Key verificationKey = signingKey.generateVerificationKey();
-                final Blake2b.Blake2b256 blake2b = new Blake2b.Blake2b256();
                 final ObjectMapper objectMapper = new ObjectMapper(new CBORFactory());
-                final byte[] cborSubject = objectMapper.writeValueAsBytes(input.getSubject());
-                final byte[] subjectHash = blake2b.digest(cborSubject);
-                final byte[] cborPropertyName = objectMapper.writeValueAsBytes(propertyName);
-                final byte[] propertyNameHash = blake2b.digest(cborPropertyName);
-                signMetadataProperty(metadataProperty, signingKey, verificationKey, subjectHash, propertyNameHash);
+                signMetadataProperty(metadataProperty, signingKey, signingKey.generateVerificationKey(),
+                        Hashing.blake2b256Digest(objectMapper.writeValueAsBytes(input.getSubject())),
+                        Hashing.blake2b256Digest(objectMapper.writeValueAsBytes(propertyName)));
             } catch (final JsonProcessingException e) {
                 throw new IllegalArgumentException("Cannot encode subject into cbor.", e);
             }
@@ -186,8 +186,6 @@ public class TokenMetadataCreator {
             throw new IllegalArgumentException("Given key cannot be used for signing.");
         }
 
-        for (final String property : input.getProperties().keySet()) {
-            signTokenMetadata(input, signingKey, property);
-        }
+        input.getProperties().forEach((key, value) -> signTokenMetadata(input, signingKey, key));
     }
 }

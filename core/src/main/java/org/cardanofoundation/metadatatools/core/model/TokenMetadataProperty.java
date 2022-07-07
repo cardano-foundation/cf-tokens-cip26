@@ -7,11 +7,9 @@ import java.util.List;
 import java.util.Locale;
 
 
-@Getter(AccessLevel.PUBLIC)
-@Setter(AccessLevel.PUBLIC)
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
 public class TokenMetadataProperty<T> {
     private T value;
     private Integer sequenceNumber;

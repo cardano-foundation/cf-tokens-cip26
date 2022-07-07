@@ -78,6 +78,9 @@ public class TokenMetadataTests {
         final String simpleCborScriptDeserializedJsonSerialized = objectMapper.writeValueAsString(simpleCborScriptDeserialized);
         assertThat(simpleCborScriptDeserializedJsonSerialized).isEqualTo(simpleJsonScriptSerializedExpected);
 
+        final PolicyScript policyScriptReversed = PolicyScript.fromCborTree(cborMapper.readTree(Hex.decode("82008200581cd459b7f853bff205d701f97b0b4513138c3b86ebce92eb88743e81b2")));
+        final String policyScriptReversedJson = objectMapper.writeValueAsString(policyScriptReversed);
+
         final PolicyScript jsonScript = objectMapper.readValue(policyJson, PolicyScript.class);
         final String jsonScriptSerializedExpected = objectMapper.writeValueAsString(jsonScript);
         final String policyCborSerializedExpected = "82018303028382051902588200581cfb864e59bf8620349c3ebe29af5ad0f9ca2e319d39e115eb93aa58a482041901f4";
@@ -133,7 +136,6 @@ public class TokenMetadataTests {
         assertThat(validationResult.getValidationErrors().size()).isEqualTo(0);
         assertThat(tokenMetadata.getSubject()).isEqualTo("6ad121cd218e513bdb8ad67afc04d188f859b25d258a694c38269941" + Hex.toHexString(assetName.getBytes(StandardCharsets.UTF_8)));
         assertThat(tokenMetadata.getPolicy()).isEqualTo("82008200581cfb864e59bf8620349c3ebe29af5ad0f9ca2e319d39e115eb93aa58a4");
-        assertThat(tokenMetadata.getTool()).isNull();
         assertThat(tokenMetadata.getProperties().get("name").getSequenceNumber()).isEqualTo(0);
         assertThat(tokenMetadata.getProperties().get("name").getValue()).isEqualTo("MelMcCoin");
         assertThat(tokenMetadata.getProperties().get("name").getSignatures().size()).isEqualTo(1);
@@ -163,7 +165,6 @@ public class TokenMetadataTests {
         assertThat(validationResult.getValidationErrors().size()).isEqualTo(0);
         assertThat(tokenMetadata.getSubject()).isEqualTo("b0537110d01bbf847e48edf448d0f411d121e69ec31be256f46b1096" + Hex.toHexString(assetName.getBytes(StandardCharsets.UTF_8)));
         assertThat(tokenMetadata.getPolicy()).isEqualTo("82018303018382051902588200581cfb864e59bf8620349c3ebe29af5ad0f9ca2e319d39e115eb93aa58a482041901f4");
-        assertThat(tokenMetadata.getTool()).isNull();
         assertThat(tokenMetadata.getProperties().get("name").getSequenceNumber()).isEqualTo(0);
         assertThat(tokenMetadata.getProperties().get("name").getValue()).isEqualTo("MelMcCoin");
         assertThat(tokenMetadata.getProperties().get("name").getSignatures().size()).isEqualTo(1);

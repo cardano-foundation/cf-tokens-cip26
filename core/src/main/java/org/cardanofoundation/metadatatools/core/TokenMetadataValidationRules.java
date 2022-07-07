@@ -14,8 +14,8 @@ public class TokenMetadataValidationRules {
     private static final int MIN_TICKER_LENGTH = 2;
     private static final int MAX_TICKER_LENGTH = 9;
     private static final int MIN_DECIMALS_VALUE = 0;
-    private static final int POLICY_HASH_SIZE = 28;
-    private static final int POLICY_HEX_STRING_LENGTH = POLICY_HASH_SIZE * 2;
+    private static final int POLICY_ID_SIZE = 28;
+    private static final int POLICY_ID_HEX_STRING_LENGTH = POLICY_ID_SIZE * 2;
     private static final List<String> REQUIRED_PROPERTIES = List.of("name", "description");
 
     @FunctionalInterface
@@ -107,14 +107,14 @@ public class TokenMetadataValidationRules {
         }
     }
 
-    public static void validateSubjectAndPolicy(final String subject, final String policy, final ValidationResult validationResult) {
+    public static void validateSubjectAndPolicy(final String subject, final String policyId, final ValidationResult validationResult) {
         if (subject == null || subject.isEmpty() || subject.isBlank()) {
             validationResult.addValidationError("Missing, empty or blank subject.");
         }
 
-        if (subject != null && policy != null) {
+        if (subject != null && policyId != null) {
             try {
-                Hex.decode(policy);
+                Hex.decode(policyId);
             } catch (final DecoderException e) {
                 validationResult.addValidationError(String.format("Cannot decode hex string representation of policy hash due to %s", e.getMessage()));
             }
@@ -125,8 +125,12 @@ public class TokenMetadataValidationRules {
                 validationResult.addValidationError(String.format("Cannot decode hex string representation of subject hash due to %s", e.getMessage()));
             }
 
-            if (!subject.startsWith(policy)) {
-                validationResult.addValidationError("If a policy is given the first 28 bytes of the subject should match the policy.");
+            if (subject.length() < POLICY_ID_HEX_STRING_LENGTH) {
+                validationResult.addValidationError(String.format("Subject must be at least %d characters long.", POLICY_ID_HEX_STRING_LENGTH));
+            } else {
+                if (!subject.startsWith(policyId)) {
+                    validationResult.addValidationError("If a policy is given the first 28 bytes of the subject should match the policy.");
+                }
             }
         }
     }

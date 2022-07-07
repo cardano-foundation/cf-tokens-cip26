@@ -8,23 +8,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.bouncycastle.crypto.digests.Blake2bDigest;
-import org.bouncycastle.jcajce.provider.digest.Blake2b;
+import lombok.*;
 import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.encoders.Hex;
+import org.cardanofoundation.metadatatools.core.crypto.Hashing;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -51,8 +44,8 @@ import java.util.List;
  * invalid_before = (4, uint)
  * invalid_hereafter = (5, uint)
  */
-@Getter(AccessLevel.PUBLIC)
-@Setter(AccessLevel.PUBLIC)
+
+@Data
 @NoArgsConstructor
 @JsonPropertyOrder({ "scripts", "slot", "keyHash", "required", "type" })
 public class PolicyScript {
@@ -160,8 +153,7 @@ public class PolicyScript {
     }
 
     public static String computePolicyId(final File file) throws IOException {
-        final String content = Files.readString(file.toPath());
-        return computePolicyId(content);
+        return computePolicyId(Files.readString(file.toPath()));
     }
 
     public static String computePolicyId(final String content) throws IOException {
@@ -182,11 +174,7 @@ public class PolicyScript {
             boas.write(scriptNamespace);
             boas.write(scriptAsCbor, 2, scriptAsCbor.length - 2);
             final byte[] scriptSerializedWithNamespace = boas.toByteArray();
-            final Blake2bDigest b2b224 = new Blake2bDigest(224);
-            b2b224.update(scriptSerializedWithNamespace, 0, scriptSerializedWithNamespace.length);
-            byte[] digests = new byte[b2b224.getDigestSize()];
-            b2b224.doFinal(digests, 0);
-            return Hex.toHexString(digests);
+            return Hashing.blake2b224Hex(scriptSerializedWithNamespace);
         } catch (final JsonProcessingException e) {
             throw new IllegalArgumentException("Cannot compute policy id.", e);
         }

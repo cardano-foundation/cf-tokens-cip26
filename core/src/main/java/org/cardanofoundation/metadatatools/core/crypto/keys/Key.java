@@ -20,10 +20,8 @@ import java.util.Arrays;
  * representations based on bech32 encoding and CIP-5 compliant prefixes.
  */
 @Log4j2
-@Getter(AccessLevel.PUBLIC)
-@Setter(AccessLevel.PUBLIC)
+@Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@ToString
 public class Key {
     public static final int CHAIN_CODE_SIZE = 32;
     public static final int EXTENDED_SIGNING_KEY_SIZE = 64;

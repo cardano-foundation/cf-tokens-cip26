@@ -5,11 +5,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.bouncycastle.util.encoders.Hex;
 
-@Getter(AccessLevel.PUBLIC)
-@Setter(AccessLevel.PUBLIC)
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString
 public class KeyTextEnvelope {
     @JsonIgnore
     private KeyTextEnvelopeType type;

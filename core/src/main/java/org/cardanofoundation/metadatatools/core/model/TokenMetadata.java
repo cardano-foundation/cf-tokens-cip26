@@ -2,6 +2,7 @@ package org.cardanofoundation.metadatatools.core.model;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonRawValue;
 import lombok.*;
 import org.bouncycastle.util.encoders.Hex;
@@ -13,9 +14,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-@Getter(AccessLevel.PUBLIC)
-@Setter(AccessLevel.PUBLIC)
-@ToString
+@Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TokenMetadata {
     private static final List<String> REQUIRED_PROPERTIES = List.of("name", "description");
 
@@ -77,7 +77,7 @@ public class TokenMetadata {
             throw new IllegalArgumentException("propertyName cannot be null.");
         }
 
-        final String propertyNameSanitized = propertyName.toLowerCase(Locale.ROOT).trim();
+        final String propertyNameSanitized = propertyName.trim();
         if (propertyNameSanitized.isEmpty()) {
             throw new IllegalArgumentException("propertyName cannot be empty or blank.");
         }
@@ -94,7 +94,7 @@ public class TokenMetadata {
             throw new IllegalArgumentException("propertyName cannot be null");
         }
 
-        final String propertyNameSanitized = propertyName.trim().toLowerCase(Locale.ROOT);
+        final String propertyNameSanitized = propertyName.trim();
         if (propertyNameSanitized.isEmpty()) {
             throw new IllegalArgumentException("propertyName cannot be empty or blank");
         }
@@ -102,13 +102,10 @@ public class TokenMetadata {
         this.properties.remove(propertyNameSanitized);
     }
 
-    @JsonRawValue
-    private String tool;
-
     public static String sanitizePropertyName(final String propertyName) {
         if (propertyName == null) {
             throw new IllegalArgumentException("propertyName cannot be null.");
         }
-        return propertyName.toLowerCase(Locale.ROOT).trim();
+        return propertyName.trim();
     }
 }
