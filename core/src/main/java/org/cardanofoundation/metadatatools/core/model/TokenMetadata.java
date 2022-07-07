@@ -77,7 +77,7 @@ public class TokenMetadata {
             throw new IllegalArgumentException("propertyName cannot be null.");
         }
 
-        final String propertyNameSanitized = propertyName.trim();
+        final String propertyNameSanitized = sanitizePropertyName(propertyName);
         if (propertyNameSanitized.isEmpty()) {
             throw new IllegalArgumentException("propertyName cannot be empty or blank.");
         }
