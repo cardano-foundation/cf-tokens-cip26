@@ -37,6 +37,11 @@ public class TokenMetadata {
         init(assetName, policyScript);
     }
 
+    public TokenMetadata(final String assetName, final PolicyScript policyScript, final Map<String, TokenMetadataProperty<?>> properties) throws IOException {
+        this.properties = Map.copyOf(properties);
+        init(assetName, policyScript);
+    }
+
     public void setSubjectFromAssetNameAndPolicyId(final String assetName, final String policyId) {
         this.subject = policyId + Hex.toHexString(assetName.getBytes(StandardCharsets.UTF_8));
     }
@@ -61,10 +66,8 @@ public class TokenMetadata {
     }
 
     @JsonAnySetter
-    public void setRequiredProperties(final Map<String, TokenMetadataProperty<?>> properties) {
-        for (final Map.Entry<String, TokenMetadataProperty<?>> entry : properties.entrySet()) {
-            addProperty(entry.getKey(), entry.getValue());
-        }
+    public void setRequiredProperties(final String propertyName, TokenMetadataProperty<?> property) {
+        addProperty(propertyName, property);
     }
 
     @JsonAnyGetter

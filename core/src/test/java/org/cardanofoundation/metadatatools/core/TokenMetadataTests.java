@@ -3,7 +3,7 @@ package org.cardanofoundation.metadatatools.core;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
-import lombok.extern.java.Log;
+import lombok.extern.log4j.Log4j2;
 import org.bouncycastle.crypto.digests.Blake2bDigest;
 import org.bouncycastle.util.encoders.Hex;
 import org.cardanofoundation.metadatatools.core.crypto.keys.Key;
@@ -22,7 +22,7 @@ import java.nio.file.Paths;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 
-@Log
+@Log4j2
 public class TokenMetadataTests {
 
     private final Path RESOURCE_DIRECTORY = Paths.get("src", "test", "resources");

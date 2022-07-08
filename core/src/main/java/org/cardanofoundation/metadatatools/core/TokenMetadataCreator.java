@@ -21,6 +21,10 @@ import java.util.function.BiConsumer;
 
 @Log4j2
 public class TokenMetadataCreator {
+    public static ValidationResult validateTokenMetadata(final TokenMetadata metadata) {
+        return validateTokenMetadata(metadata, null, false);
+    }
+
     public static ValidationResult validateTokenMetadata(final TokenMetadata metadata, final Key verificationKey) {
         return validateTokenMetadata(metadata, verificationKey, false);
     }
@@ -29,10 +33,7 @@ public class TokenMetadataCreator {
         if (metadata == null) {
             throw new IllegalArgumentException("metadata cannot be null.");
         }
-        if (verificationKey == null) {
-            throw new IllegalArgumentException("verificationKey cannot be null.");
-        }
-        if (verificationKey.getKeyType().isSigningKey()) {
+        if (verificationKey != null && verificationKey.getKeyType().isSigningKey()) {
             throw new IllegalArgumentException("This function expects a verification key. Public key derivation from private keys shall be done in client.");
         }
 
@@ -51,17 +52,28 @@ public class TokenMetadataCreator {
                 if (!signaturesOnly) {
                     validationResult.mergeWith(TokenMetadataValidationRules.validateProperty(entry.getKey(), entry.getValue()));
                 }
+                final ObjectMapper objectMapper = new ObjectMapper(new CBORFactory());
+                final byte[] propertyHash = Hashing.blake2b256Digest(List.of(
+                        Hashing.blake2b256Digest(objectMapper.writeValueAsBytes(metadata.getSubject())),
+                        Hashing.blake2b256Digest(objectMapper.writeValueAsBytes(entry.getKey())),
+                        Hashing.blake2b256Digest(objectMapper.writeValueAsBytes(entry.getValue().getValue())),
+                        Hashing.blake2b256Digest(objectMapper.writeValueAsBytes(entry.getValue().getSequenceNumber()))));
                 for (final AttestationSignature attestationSignature : entry.getValue().getSignatures()) {
-                    final ObjectMapper objectMapper = new ObjectMapper(new CBORFactory());
-                    final byte[] propertyHash = Hashing.blake2b256Digest(List.of(
-                            Hashing.blake2b256Digest(objectMapper.writeValueAsBytes(metadata.getSubject())),
-                            Hashing.blake2b256Digest(objectMapper.writeValueAsBytes(entry.getKey())),
-                            Hashing.blake2b256Digest(objectMapper.writeValueAsBytes(entry.getValue().getValue())),
-                            Hashing.blake2b256Digest(objectMapper.writeValueAsBytes(entry.getValue().getSequenceNumber()))));
-                    final byte[] signatureRaw = Hex.decode(attestationSignature.getSignature());
-                    final boolean result = Ed25519.verify(signatureRaw, 0, verificationKey.getRawKeyBytes(), 0, propertyHash, 0, propertyHash.length);
-                    if (!result) {
-                        validationResult.addValidationError(String.format("property %s: signature verification failed for key %s.", entry.getKey(), attestationSignature.getPublicKey()));
+                    if (verificationKey != null) {
+                        if (attestationSignature.getPublicKey().equals(Hex.toHexString(verificationKey.getRawKeyBytes()))) {
+                            final byte[] signatureRaw = Hex.decode(attestationSignature.getSignature());
+                            final boolean result = Ed25519.verify(signatureRaw, 0, verificationKey.getRawKeyBytes(), 0, propertyHash, 0, propertyHash.length);
+                            if (!result) {
+                                validationResult.addValidationError(String.format("property %s: signature verification failed for key %s.", entry.getKey(), attestationSignature.getPublicKey()));
+                            }
+                            break;
+                        }
+                    } else {
+                        final byte[] signatureRaw = Hex.decode(attestationSignature.getSignature());
+                        final boolean result = Ed25519.verify(signatureRaw, 0, Hex.decode(attestationSignature.getPublicKey()), 0, propertyHash, 0, propertyHash.length);
+                        if (!result) {
+                            validationResult.addValidationError(String.format("property %s: signature verification failed for key %s.", entry.getKey(), attestationSignature.getPublicKey()));
+                        }
                     }
                 }
             }
