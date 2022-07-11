@@ -1,8 +1,11 @@
-# <p align="center">Cardano Java Utility lib</p>
+[![License](https://img.shields.io/github/license/cardano-foundation/cf-metadata-core)](https://github.com/cardano-foundation/cf-metadata-core/blob/main/LICENSE)
+![GitHub top language](https://img.shields.io/github/languages/top/cardano-foundation/cf-metadata-core)
+![coverage](https://github.com/cardano-foundation/cf-metadata-core/blob/badges/jacoco.svg)
+![branches](https://github.com/cardano-foundation/cf-metadata-core/blob/badges/branches.svg)
+[![Issues](https://img.shields.io/github/issues/cardano-foundation/cf-metadata-core)](https://github.com/cardano-foundation/cf-metadata-core/issues)
 
-<div align="center">
-  <p>Collection of utility functions that help you build on Cardano</p>
-</div>
+# Cardano Java Utility lib
+Collection of utility functions that help you build on Cardano
 
 ## Introduction
 
@@ -186,6 +189,4 @@ When contributing to this project and interacting with others, please follow our
 
 ---
 
-<p align="center">
 Thanks for visiting and enjoy :heart:!
-</p>
