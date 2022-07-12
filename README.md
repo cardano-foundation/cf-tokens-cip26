@@ -4,7 +4,10 @@
 ![branches](https://github.com/cardano-foundation/cf-metadata-core/blob/badges/branches.svg)
 [![Issues](https://img.shields.io/github/issues/cardano-foundation/cf-metadata-core)](https://github.com/cardano-foundation/cf-metadata-core/issues)
 
+---
+
 # Cardano Java Utility lib
+
 Collection of utility functions that help you build on Cardano
 
 ## Introduction
@@ -164,11 +167,15 @@ log.info((TokenMetadataCreator.validateTokenMetadata(tokenMetadataDeserialized, 
         : "verification failed");
 ```
 
-### Build from source
-Just clone the repo and use maven to build:
+## Build from source
+Clone the repo
+```console
+$ git clone git@github.com:cardano-foundation/cf-metadata-core.git
+```
 
-```sh
-mvn package
+Build with Maven
+```console
+$ mvn package
 ```
 
 ## Features
