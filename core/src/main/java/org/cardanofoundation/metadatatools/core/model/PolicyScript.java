@@ -221,10 +221,8 @@ public class PolicyScript {
                             }
                         }
                     }
-                    if (policyScript.getScripts() == null) {
-                        if (!childPolicyScripts.isEmpty()) {
-                            policyScript.setScripts(childPolicyScripts);
-                        }
+                    if (policyScript.getScripts() == null && !childPolicyScripts.isEmpty()) {
+                        policyScript.setScripts(childPolicyScripts);
                     }
                     return policyScript;
                 } else {

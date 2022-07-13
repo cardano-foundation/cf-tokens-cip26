@@ -128,13 +128,13 @@ public class Key {
         if (keyType.isExtendedKey()) {
             return new Key(keyType,
                     Arrays.copyOfRange(bech32Data, 0,
-                            (keyType.isSigningKey()) ? EXTENDED_SIGNING_KEY_SIZE : Ed25519.PUBLIC_KEY_SIZE),
+                            keyType.isSigningKey() ? EXTENDED_SIGNING_KEY_SIZE : Ed25519.PUBLIC_KEY_SIZE),
                     Arrays.copyOfRange(bech32Data,
-                            (keyType.isSigningKey()) ? EXTENDED_SIGNING_KEY_SIZE : Ed25519.PUBLIC_KEY_SIZE,
-                            ((keyType.isSigningKey()) ? EXTENDED_SIGNING_KEY_SIZE : Ed25519.PUBLIC_KEY_SIZE) + CHAIN_CODE_SIZE));
+                            keyType.isSigningKey() ? EXTENDED_SIGNING_KEY_SIZE : Ed25519.PUBLIC_KEY_SIZE,
+                            (keyType.isSigningKey() ? EXTENDED_SIGNING_KEY_SIZE : Ed25519.PUBLIC_KEY_SIZE) + CHAIN_CODE_SIZE));
         } else {
             return new Key(keyType,
-                    Arrays.copyOfRange(bech32Data, 0, (keyType.isSigningKey()) ? Ed25519.SECRET_KEY_SIZE : Ed25519.PUBLIC_KEY_SIZE),
+                    Arrays.copyOfRange(bech32Data, 0, keyType.isSigningKey() ? Ed25519.SECRET_KEY_SIZE : Ed25519.PUBLIC_KEY_SIZE),
                     null);
         }
     }
@@ -195,8 +195,8 @@ public class Key {
                 }
             }
         } else {
-            if ((keyType.isSigningKey() && this.rawKeyBytes.length == Ed25519.SECRET_KEY_SIZE) ||
-                    (!keyType.isSigningKey() && this.rawKeyBytes.length == Ed25519.PUBLIC_KEY_SIZE)) {
+            if (keyType.isSigningKey() && this.rawKeyBytes.length == Ed25519.SECRET_KEY_SIZE
+                    || !keyType.isSigningKey() && this.rawKeyBytes.length == Ed25519.PUBLIC_KEY_SIZE) {
                 return Bech32.encode(Bech32.Encoding.BECH32, this.keyType.getHrp(), this.rawKeyBytes);
             } else {
                 throw new IllegalStateException("Key type and key bytes do not match.");
