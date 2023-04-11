@@ -7,8 +7,16 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+env:
+  PRIVATE_MVN_REGISTRY_TOKEN: ${{ secrets.GITLAB_PKG_REGISTRY_TOKEN }}
+  PRIVATE_MVN_REGISTRY_URL: ${{ secrets.GITLAB_MAVEN_REGISTRY_URL }}
+  PRIVATE_DOCKER_REGISTRY_URL: ${{ secrets.GITLAB_DOCKER_REGISTRY_URL }}
+
 jobs:
   build:
+    permissions:
+      contents: read
+      packages: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,8 +34,18 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Setup depends
+        run: |
+          pip install yq
+
+      - name: Setup mvn settings.yml
+        uses: s4u/maven-settings-action@v2.5.0
+        with:
+          servers: '[{"id": "private-registry","configuration": {"httpHeaders": {"property": {"name": "PRIVATE-TOKEN","value": "${{ env.PRIVATE_MVN_REGISTRY_TOKEN }}"}}}}]'
+
       - name: Build
         run: mvn --batch-mode --update-snapshots clean package --file ./pom.xml -DskipTests
+
       - name: Test
         run: mvn --batch-mode --update-snapshots clean verify --file ./pom.xml
 
@@ -64,3 +82,15 @@ jobs:
         with:
           name: jacoco-report
           path: core/target/site/jacoco/
+
+      - name: Publish
+        run: |
+          xq \
+            --arg REPOSITORY_ID private-registry \
+            --arg REPOSITORY_NAME "${GITHUB_REPOSITORY}" \
+            --arg REPOSITORY_URL "${{ env.PRIVATE_MVN_REGISTRY_URL }}" \
+            '.project.distributionManagement = { "repository": { "id": $REPOSITORY_ID, "name": $REPOSITORY_NAME , "url": $REPOSITORY_URL } }' \
+            pom.xml \
+            --xml-output > pom.xml.mod && mv pom.xml.mod pom.xml
+          
+          mvn --batch-mode --update-snapshots deploy -DskipTests

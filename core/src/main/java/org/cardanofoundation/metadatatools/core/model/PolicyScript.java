@@ -50,7 +50,8 @@ import java.util.List;
 @JsonPropertyOrder({ "scripts", "slot", "keyHash", "required", "type" })
 public class PolicyScript {
     private enum ScriptLanguageNamespace {
-        NATIVE_SCRIPT((byte) 0);
+        NATIVE_SCRIPT((byte) 0),
+        PLUTUS_SCRIPT((byte) 1);
 
         private final byte namespaceId;
 
