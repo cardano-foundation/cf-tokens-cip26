@@ -93,5 +93,4 @@ jobs:
             pom.xml \
             --xml-output > pom.xml.mod && mv pom.xml.mod pom.xml
           
-          cat pom.xml
           mvn --batch-mode --update-snapshots deploy -DskipTests
