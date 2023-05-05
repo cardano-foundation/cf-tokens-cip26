@@ -1,4 +1,4 @@
-package org.cardanofoundation.metadatatools.core;
+package org.cardanofoundation.metadatatools.core.cip26;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -6,12 +6,12 @@ import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import lombok.extern.log4j.Log4j2;
 import org.bouncycastle.math.ec.rfc8032.Ed25519;
 import org.bouncycastle.util.encoders.Hex;
+import org.cardanofoundation.metadatatools.core.cip26.model.Metadata;
 import org.cardanofoundation.metadatatools.core.crypto.Hashing;
 import org.cardanofoundation.metadatatools.core.crypto.keys.Key;
-import org.cardanofoundation.metadatatools.core.model.AttestationSignature;
-import org.cardanofoundation.metadatatools.core.model.PolicyScript;
-import org.cardanofoundation.metadatatools.core.model.TokenMetadataProperty;
-import org.cardanofoundation.metadatatools.core.model.TokenMetadata;
+import org.cardanofoundation.metadatatools.core.cip26.model.AttestationSignature;
+import org.cardanofoundation.metadatatools.core.cip26.model.PolicyScript;
+import org.cardanofoundation.metadatatools.core.cip26.model.MetadataProperty;
 
 import java.io.IOException;
 import java.util.List;
@@ -20,16 +20,16 @@ import java.util.function.BiConsumer;
 
 
 @Log4j2
-public class TokenMetadataCreator {
-    public static ValidationResult validateTokenMetadata(final TokenMetadata metadata) {
-        return validateTokenMetadata(metadata, null, false);
+public class MetadataCreator {
+    public static ValidationResult validateMetadata(final Metadata metadata) {
+        return validateMetadata(metadata, null, false);
     }
 
-    public static ValidationResult validateTokenMetadata(final TokenMetadata metadata, final Key verificationKey) {
-        return validateTokenMetadata(metadata, verificationKey, false);
+    public static ValidationResult validateMetadata(final Metadata metadata, final Key verificationKey) {
+        return validateMetadata(metadata, verificationKey, false);
     }
 
-    public static ValidationResult validateTokenMetadata(final TokenMetadata metadata, final Key verificationKey, final boolean signaturesOnly) {
+    public static ValidationResult validateMetadata(final Metadata metadata, final Key verificationKey, final boolean signaturesOnly) {
         if (metadata == null) {
             throw new IllegalArgumentException("metadata cannot be null.");
         }
@@ -38,19 +38,13 @@ public class TokenMetadataCreator {
         }
 
         final ValidationResult validationResult = new ValidationResult();
-        try {
-            final ObjectMapper cborMapper = new ObjectMapper(new CBORFactory());
-            final PolicyScript policyScript = PolicyScript.fromCborTree(cborMapper.readTree(Hex.decode(metadata.getPolicy())));
-            TokenMetadataValidationRules.validateSubjectAndPolicy(metadata.getSubject(), policyScript.computePolicyId(), validationResult);
-        } catch (final IOException e) {
-            validationResult.addValidationError("Could not deserialize policy script from policy value due to " + e.getMessage());
-        }
-        TokenMetadataValidationRules.validateHasRequiredProperties(metadata.getProperties().keySet(), validationResult);
+        MetadataValidationRules.validateSubjectAndPolicy(metadata.getSubject(), metadata.getPolicy(), validationResult);
+        MetadataValidationRules.validateHasRequiredProperties(metadata.getProperties().keySet(), validationResult);
 
         try {
-            for (final Map.Entry<String, TokenMetadataProperty<?>> entry : metadata.getProperties().entrySet()) {
+            for (final Map.Entry<String, MetadataProperty<?>> entry : metadata.getProperties().entrySet()) {
                 if (!signaturesOnly) {
-                    validationResult.mergeWith(TokenMetadataValidationRules.validateProperty(entry.getKey(), entry.getValue()));
+                    validationResult.mergeWith(MetadataValidationRules.validateProperty(entry.getKey(), entry.getValue()));
                 }
                 final ObjectMapper objectMapper = new ObjectMapper(new CBORFactory());
                 final byte[] propertyHash = Hashing.blake2b256Digest(List.of(
@@ -84,9 +78,9 @@ public class TokenMetadataCreator {
         return validationResult;
     }
 
-    public static ValidationResult validateTokenMetadataUpdate(final TokenMetadata latest, final Key verificationKey, final TokenMetadata base) {
-        final ValidationResult resultForLatest = validateTokenMetadata(latest, verificationKey);
-        final ValidationResult resultForBase = validateTokenMetadata(base, verificationKey);
+    public static ValidationResult validateMetadataUpdate(final Metadata latest, final Key verificationKey, final Metadata base) {
+        final ValidationResult resultForLatest = validateMetadata(latest, verificationKey);
+        final ValidationResult resultForBase = validateMetadata(base, verificationKey);
         if (resultForLatest.isValid() && resultForBase.isValid()) {
             final ValidationResult validationResult = new ValidationResult();
             if (!latest.getSubject().equalsIgnoreCase(base.getSubject())) {
@@ -95,19 +89,13 @@ public class TokenMetadataCreator {
             if (!latest.getPolicy().equalsIgnoreCase(base.getPolicy())) {
                 validationResult.addValidationError("Policy of updated metadata differs from policy of base metadata.");
             }
-            if (!latest.getProperties().keySet().containsAll(base.getProperties().keySet())) {
-                validationResult.addValidationError("Missing properties in updated metadata that were available in previous.");
-            }
-            latest.getProperties().forEach(new BiConsumer<String, TokenMetadataProperty<?>>() {
-                @Override
-                public void accept(final String propertyKey, final TokenMetadataProperty<?> propertyValue) {
-                    if (base.getProperties().containsKey(propertyKey)) {
-                        final TokenMetadataProperty<?> baseProperty = base.getProperties().get(propertyKey);
-                        if (baseProperty.getSequenceNumber() >= propertyValue.getSequenceNumber()) {
-                            validationResult.addValidationError(String.format(
-                                    "Sequence number (%d) for property %s is not greater than the sequence number (%d) of the base property.",
-                                    propertyValue.getSequenceNumber(), propertyKey, baseProperty.getSequenceNumber()));
-                        }
+            latest.getProperties().forEach((propertyKey, propertyValue) -> {
+                if (base.getProperties().containsKey(propertyKey)) {
+                    final MetadataProperty<?> baseProperty = base.getProperties().get(propertyKey);
+                    if (baseProperty.getSequenceNumber() >= propertyValue.getSequenceNumber()) {
+                        validationResult.addValidationError(String.format(
+                                "Sequence number (%d) for property %s is not greater than the sequence number (%d) of the base property.",
+                                propertyValue.getSequenceNumber(), propertyKey, baseProperty.getSequenceNumber()));
                     }
                 }
             });
@@ -117,7 +105,7 @@ public class TokenMetadataCreator {
         }
     }
 
-    private static void signMetadataProperty(final TokenMetadataProperty<?> property, final Key signingKey, final Key verificationKey, final byte[] subjectHash, final byte[] propertyNameHash) {
+    private static void signMetadataProperty(final MetadataProperty<?> property, final Key signingKey, final Key verificationKey, final byte[] subjectHash, final byte[] propertyNameHash) {
         if (property == null) {
             throw new IllegalArgumentException("property cannot be null.");
         }
@@ -160,9 +148,9 @@ public class TokenMetadataCreator {
         }
     }
 
-    public static void signTokenMetadata(final TokenMetadata input, final Key signingKey, final String propertyName) {
+    public static void signMetadata(final Metadata input, final Key signingKey, final String propertyName) {
         if (input == null) {
-            throw new IllegalArgumentException("TokenMetadata object cannot be null.");
+            throw new IllegalArgumentException("Metadata object cannot be null.");
         }
         if (signingKey == null) {
             throw new IllegalArgumentException("Signing key cannot be null.");
@@ -174,7 +162,7 @@ public class TokenMetadataCreator {
             throw new IllegalArgumentException("propertyName cannot be null or blank");
         }
 
-        final TokenMetadataProperty<?> metadataProperty = input.getProperties().getOrDefault(propertyName, null);
+        final MetadataProperty<?> metadataProperty = input.getProperties().getOrDefault(propertyName, null);
         if (metadataProperty != null) {
             try {
                 final ObjectMapper objectMapper = new ObjectMapper(new CBORFactory());
@@ -187,9 +175,9 @@ public class TokenMetadataCreator {
         }
     }
 
-    public static void signTokenMetadata(final TokenMetadata input, final Key signingKey) {
+    public static void signMetadata(final Metadata input, final Key signingKey) {
         if (input == null) {
-            throw new IllegalArgumentException("TokenMetadata object cannot be null.");
+            throw new IllegalArgumentException("Metadata object cannot be null.");
         }
         if (signingKey == null) {
             throw new IllegalArgumentException("Signing key cannot be null.");
@@ -198,6 +186,6 @@ public class TokenMetadataCreator {
             throw new IllegalArgumentException("Given key cannot be used for signing.");
         }
 
-        input.getProperties().forEach((key, value) -> signTokenMetadata(input, signingKey, key));
+        input.getProperties().forEach((key, value) -> signMetadata(input, signingKey, key));
     }
 }

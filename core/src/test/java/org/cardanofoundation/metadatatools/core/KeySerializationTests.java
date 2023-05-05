@@ -7,8 +7,8 @@ import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
 import org.bouncycastle.math.ec.rfc8032.Ed25519;
 import org.bouncycastle.util.encoders.Hex;
 import org.cardanofoundation.metadatatools.core.crypto.keys.Key;
-import org.cardanofoundation.metadatatools.core.model.KeyTextEnvelope;
-import org.cardanofoundation.metadatatools.core.model.KeyTextEnvelopeType;
+import org.cardanofoundation.metadatatools.core.cip26.model.KeyTextEnvelope;
+import org.cardanofoundation.metadatatools.core.cip26.model.KeyTextEnvelopeType;
 import org.cardanofoundation.metadatatools.core.crypto.keys.KeyType;
 import org.junit.jupiter.api.Test;
 

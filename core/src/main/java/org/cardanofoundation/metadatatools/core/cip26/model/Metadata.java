@@ -1,4 +1,4 @@
-package org.cardanofoundation.metadatatools.core.model;
+package org.cardanofoundation.metadatatools.core.cip26.model;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
@@ -14,28 +14,28 @@ import java.util.Map;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class TokenMetadata {
+public class Metadata {
     private static final List<String> REQUIRED_PROPERTIES = List.of("name", "description");
 
     private String subject;
     private String policy;
-    private Map<String, TokenMetadataProperty<?>> properties;
+    private Map<String, MetadataProperty<?>> properties;
 
-    public TokenMetadata() {
+    public Metadata() {
         this.properties = new HashMap<>();
     }
 
-    public TokenMetadata(final String assetName) throws IOException {
+    public Metadata(final String assetName) throws IOException {
         this.properties = new HashMap<>();
         init(assetName);
     }
 
-    public TokenMetadata(final String assetName, final PolicyScript policyScript) throws IOException {
+    public Metadata(final String assetName, final PolicyScript policyScript) throws IOException {
         this.properties = new HashMap<>();
         init(assetName, policyScript);
     }
 
-    public TokenMetadata(final String assetName, final PolicyScript policyScript, final Map<String, TokenMetadataProperty<?>> properties) throws IOException {
+    public Metadata(final String assetName, final PolicyScript policyScript, final Map<String, MetadataProperty<?>> properties) throws IOException {
         this.properties = Map.copyOf(properties);
         init(assetName, policyScript);
     }
@@ -64,16 +64,16 @@ public class TokenMetadata {
     }
 
     @JsonAnySetter
-    public void setRequiredProperties(final String propertyName, TokenMetadataProperty<?> property) {
+    public void setRequiredProperties(final String propertyName, MetadataProperty<?> property) {
         addProperty(propertyName, property);
     }
 
     @JsonAnyGetter
-    public Map<String, TokenMetadataProperty<?>> getProperties() {
+    public Map<String, MetadataProperty<?>> getProperties() {
         return this.properties;
     }
 
-    public void addProperty(final String propertyName, final TokenMetadataProperty<?> property) {
+    public void addProperty(final String propertyName, final MetadataProperty<?> property) {
         if (propertyName == null) {
             throw new IllegalArgumentException("propertyName cannot be null.");
         }

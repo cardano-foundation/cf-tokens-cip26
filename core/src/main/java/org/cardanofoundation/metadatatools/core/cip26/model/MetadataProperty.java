@@ -1,4 +1,4 @@
-package org.cardanofoundation.metadatatools.core.model;
+package org.cardanofoundation.metadatatools.core.cip26.model;
 
 import lombok.*;
 
@@ -10,7 +10,7 @@ import java.util.Locale;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TokenMetadataProperty<T> {
+public class MetadataProperty<T> {
     private T value;
     private Integer sequenceNumber;
     private List<AttestationSignature> signatures;

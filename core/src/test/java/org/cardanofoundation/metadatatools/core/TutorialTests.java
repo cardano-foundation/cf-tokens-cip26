@@ -3,11 +3,12 @@ package org.cardanofoundation.metadatatools.core;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.java.Log;
+import org.cardanofoundation.metadatatools.core.cip26.MetadataCreator;
+import org.cardanofoundation.metadatatools.core.cip26.model.Metadata;
 import org.cardanofoundation.metadatatools.core.crypto.keys.Key;
-import org.cardanofoundation.metadatatools.core.model.KeyTextEnvelope;
-import org.cardanofoundation.metadatatools.core.model.PolicyScript;
-import org.cardanofoundation.metadatatools.core.model.TokenMetadata;
-import org.cardanofoundation.metadatatools.core.model.TokenMetadataProperty;
+import org.cardanofoundation.metadatatools.core.cip26.model.KeyTextEnvelope;
+import org.cardanofoundation.metadatatools.core.cip26.model.PolicyScript;
+import org.cardanofoundation.metadatatools.core.cip26.model.MetadataProperty;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -62,25 +63,25 @@ public class TutorialTests {
         final PolicyScript policyScript = objectMapper.readValue(policyJson, PolicyScript.class);
 
         // Step 3: Create the actual metadata providing some properties.
-        final TokenMetadata tokenMetadata = new TokenMetadata("CfTestCoin", policyScript, Map.ofEntries(
-                entry("name", new TokenMetadataProperty<>("CfTestCoin", 0, null)),
-                entry("description", new TokenMetadataProperty<>("We test with CfTestCoin.", 0, null)),
-                entry("ticker", new TokenMetadataProperty<>("CfTstCn", 0, null)),
-                entry("decimals", new TokenMetadataProperty<>(6, 0, null))
+        final Metadata metadata = new Metadata("CfTestCoin", policyScript, Map.ofEntries(
+                entry("name", new MetadataProperty<>("CfTestCoin", 0, null)),
+                entry("description", new MetadataProperty<>("We test with CfTestCoin.", 0, null)),
+                entry("ticker", new MetadataProperty<>("CfTstCn", 0, null)),
+                entry("decimals", new MetadataProperty<>(6, 0, null))
         ));
 
         // Step 4: Sign the metadata with the signing key.
-        TokenMetadataCreator.signTokenMetadata(tokenMetadata, signingKey);
+        MetadataCreator.signMetadata(metadata, signingKey);
 
         // Actually the example is over but usually you want to serialize your metadata to JSON or load metadata from
         // JSON and perform a validation based on a certain verification key or likewise. The next steps are about those
         // things.
 
         // Step 5: Serialize the metadata to its string representation.
-        final String tokenMetadataAsJson = objectMapper.writeValueAsString(tokenMetadata);
+        final String tokenMetadataAsJson = objectMapper.writeValueAsString(metadata);
 
         // Step 6: Deserialize the metadata from its string representation.
-        final TokenMetadata tokenMetadataDeserialized = objectMapper.readValue(tokenMetadataAsJson, TokenMetadata.class);
+        final Metadata metadataDeserialized = objectMapper.readValue(tokenMetadataAsJson, Metadata.class);
 
         // Step 7: Load the verification key
         final KeyTextEnvelope verificationKeyEnvelope = objectMapper.readValue("""
@@ -93,7 +94,7 @@ public class TutorialTests {
         final Key verificationKey = Key.fromTextEnvelope(verificationKeyEnvelope);
 
         // Step 8: Try to validate the metadata given a verification key that must be included in the signatures.
-        log.info((TokenMetadataCreator.validateTokenMetadata(tokenMetadataDeserialized, verificationKey).isValid())
+        log.info((MetadataCreator.validateMetadata(metadataDeserialized, verificationKey).isValid())
                 ? "verification succeeded"
                 : "verification failed");
     }

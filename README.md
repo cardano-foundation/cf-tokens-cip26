@@ -133,7 +133,7 @@ final String policyJson = """
 final PolicyScript policyScript = objectMapper.readValue(policyJson, PolicyScript.class);
 
 // Step 3: Create the actual metadata providing some properties.
-final TokenMetadata tokenMetadata = new TokenMetadata("CfTestCoin", policyScript, Map.ofEntries(
+final TokenMetadata metadata = new TokenMetadata("CfTestCoin", policyScript, Map.ofEntries(
         entry("name", new TokenMetadataProperty<>("CfTestCoin", 0, null)),
         entry("description", new TokenMetadataProperty<>("We test with CfTestCoin.", 0, null)),
         entry("ticker", new TokenMetadataProperty<>("CfTstCn", 0, null)),
@@ -141,17 +141,17 @@ final TokenMetadata tokenMetadata = new TokenMetadata("CfTestCoin", policyScript
 ));
 
 // Step 4: Sign the metadata with the signing key.
-TokenMetadataCreator.signTokenMetadata(tokenMetadata, signingKey);
+TokenMetadataCreator.signTokenMetadata(metadata, signingKey);
 
 // Actually the example is over but usually you want to serialize your metadata to JSON or load metadata from
 // JSON and perform a validation based on a certain verification key or likewise. The next steps are about those
 // things.
 
 // Step 5: Serialize the metadata to its string representation.
-final String tokenMetadataAsJson = objectMapper.writeValueAsString(tokenMetadata);
+final String tokenMetadataAsJson = objectMapper.writeValueAsString(metadata);
 
 // Step 6: Deserialize the metadata from its string representation.
-final TokenMetadata tokenMetadataDeserialized = objectMapper.readValue(tokenMetadataAsJson, TokenMetadata.class);
+final TokenMetadata metadataDeserialized = objectMapper.readValue(tokenMetadataAsJson, TokenMetadata.class);
 
 // Step 7: Load the verification key
 final KeyTextEnvelope verificationKeyEnvelope = objectMapper.readValue("""
@@ -164,7 +164,7 @@ final KeyTextEnvelope verificationKeyEnvelope = objectMapper.readValue("""
 final Key verificationKey = Key.fromTextEnvelope(verificationKeyEnvelope);
 
 // Step 8: Try to validate the metadata given a verification key that must be included in the signatures.
-log.info((TokenMetadataCreator.validateTokenMetadata(tokenMetadataDeserialized, verificationKey).isValid())
+log.info((TokenMetadataCreator.validateTokenMetadata(metadataDeserialized, verificationKey).isValid())
         ? "verification succeeded"
         : "verification failed");
 ```

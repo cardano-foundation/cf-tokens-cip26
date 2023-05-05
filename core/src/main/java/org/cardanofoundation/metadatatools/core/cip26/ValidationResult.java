@@ -1,4 +1,4 @@
-package org.cardanofoundation.metadatatools.core;
+package org.cardanofoundation.metadatatools.core.cip26;
 
 import lombok.*;
 

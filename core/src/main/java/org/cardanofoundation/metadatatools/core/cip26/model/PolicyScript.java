@@ -1,4 +1,4 @@
-package org.cardanofoundation.metadatatools.core.model;
+package org.cardanofoundation.metadatatools.core.cip26.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;

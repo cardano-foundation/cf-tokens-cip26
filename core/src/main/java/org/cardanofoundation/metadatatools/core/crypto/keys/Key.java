@@ -9,8 +9,8 @@ import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters;
 import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
 import org.bouncycastle.math.ec.rfc8032.Ed25519;
 import org.cardanofoundation.metadatatools.core.crypto.Bech32;
-import org.cardanofoundation.metadatatools.core.model.KeyTextEnvelope;
-import org.cardanofoundation.metadatatools.core.model.KeyTextEnvelopeType;
+import org.cardanofoundation.metadatatools.core.cip26.model.KeyTextEnvelope;
+import org.cardanofoundation.metadatatools.core.cip26.model.KeyTextEnvelopeType;
 
 import java.io.IOException;
 import java.util.Arrays;

@@ -1,14 +1,18 @@
-package org.cardanofoundation.metadatatools.core;
+package org.cardanofoundation.metadatatools.core.cip26;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import org.bouncycastle.util.encoders.DecoderException;
 import org.bouncycastle.util.encoders.Hex;
-import org.cardanofoundation.metadatatools.core.model.TokenMetadataProperty;
+import org.cardanofoundation.metadatatools.core.cip26.model.MetadataProperty;
+import org.cardanofoundation.metadatatools.core.cip26.model.PolicyScript;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class TokenMetadataValidationRules {
+public class MetadataValidationRules {
     private static final int MAX_NAME_LENGTH = 50;
     private static final int MAX_DESCRIPTION_LENGTH = 500;
     private static final int MIN_TICKER_LENGTH = 2;
@@ -20,43 +24,43 @@ public class TokenMetadataValidationRules {
 
     @FunctionalInterface
     interface TokenMetadataValidatorFunction {
-        ValidationResult apply(final String propertyName, final TokenMetadataProperty<?> property);
+        ValidationResult apply(final String propertyName, final MetadataProperty<?> property);
     }
 
     private static final Map<String, TokenMetadataValidatorFunction> VALIDATION_RULES = Map.ofEntries(
-            Map.entry("name", TokenMetadataValidationRules::applyNamePropertyValidationRules),
-            Map.entry("description", TokenMetadataValidationRules::applyDescriptionPropertyValidationRules),
-            Map.entry("ticker", TokenMetadataValidationRules::applyTickerPropertyValidationRules),
-            Map.entry("decimals", TokenMetadataValidationRules::applyDecimalsPropertyValidationRules)
+            Map.entry("name", MetadataValidationRules::applyNamePropertyValidationRules),
+            Map.entry("description", MetadataValidationRules::applyDescriptionPropertyValidationRules),
+            Map.entry("ticker", MetadataValidationRules::applyTickerPropertyValidationRules),
+            Map.entry("decimals", MetadataValidationRules::applyDecimalsPropertyValidationRules)
     );
 
-    private static ValidationResult applyNamePropertyValidationRules(final String propertyName, final TokenMetadataProperty<?> property) {
+    private static ValidationResult applyNamePropertyValidationRules(final String propertyName, final MetadataProperty<?> property) {
         final ValidationResult validationResult = applyDefaultValidationRules(propertyName, property);
         if (!(property.getValue().getClass() == String.class)) {
             validationResult.addValidationError(String.format("property %s: value is not of expected type String but %s", propertyName, property.getValue().getClass().getName()));
             return validationResult;
         }
-        final String value = (String)property.getValue();
+        final String value = (String) property.getValue();
         if (value.length() > MAX_NAME_LENGTH) {
             validationResult.addValidationError(String.format("property %s: only %d characters allow but got %d", propertyName, MAX_NAME_LENGTH, value.length()));
         }
         return validationResult;
     }
 
-    private static ValidationResult applyDescriptionPropertyValidationRules(final String propertyName, final TokenMetadataProperty<?> property) {
+    private static ValidationResult applyDescriptionPropertyValidationRules(final String propertyName, final MetadataProperty<?> property) {
         final ValidationResult validationResult = applyDefaultValidationRules(propertyName, property);
         if (!(property.getValue().getClass() == String.class)) {
             validationResult.addValidationError(String.format("property %s: value is not of expected type String but %s", propertyName, property.getValue().getClass().getName()));
             return validationResult;
         }
-        final String value = (String)property.getValue();
+        final String value = (String) property.getValue();
         if (value.length() > MAX_DESCRIPTION_LENGTH) {
             validationResult.addValidationError(String.format("property %s: only %d characters allow but got %d", propertyName, MAX_DESCRIPTION_LENGTH, value.length()));
         }
         return validationResult;
     }
 
-    private static ValidationResult applyTickerPropertyValidationRules(final String propertyName, final TokenMetadataProperty<?> property) {
+    private static ValidationResult applyTickerPropertyValidationRules(final String propertyName, final MetadataProperty<?> property) {
         final ValidationResult validationResult = applyDefaultValidationRules(propertyName, property);
         if (!(property.getValue().getClass() == String.class)) {
             validationResult.addValidationError(String.format("property %s: value is not of expected type String but %s", propertyName, property.getValue().getClass().getName()));
@@ -69,7 +73,7 @@ public class TokenMetadataValidationRules {
         return validationResult;
     }
 
-    private static ValidationResult applyDecimalsPropertyValidationRules(final String propertyName, final TokenMetadataProperty<?> property) {
+    private static ValidationResult applyDecimalsPropertyValidationRules(final String propertyName, final MetadataProperty<?> property) {
         final ValidationResult validationResult = applyDefaultValidationRules(propertyName, property);
         if (!(property.getValue().getClass() == Integer.class)) {
             validationResult.addValidationError(String.format("property %s: value is not of expected type Integer but %s", propertyName, property.getValue().getClass().getName()));
@@ -82,7 +86,7 @@ public class TokenMetadataValidationRules {
         return validationResult;
     }
 
-    private static ValidationResult applyDefaultValidationRules(final String propertyName, final TokenMetadataProperty<?> property) {
+    private static ValidationResult applyDefaultValidationRules(final String propertyName, final MetadataProperty<?> property) {
         final ValidationResult validationResult = new ValidationResult();
         if (property.getValue() == null) {
             validationResult.addValidationError(String.format("property %s: value is undefined", propertyName));
@@ -96,8 +100,8 @@ public class TokenMetadataValidationRules {
         return validationResult;
     }
 
-    public static ValidationResult validateProperty(final String propertyName, final TokenMetadataProperty<?> metadataProperty) {
-        return VALIDATION_RULES.getOrDefault(propertyName, TokenMetadataValidationRules::applyDefaultValidationRules)
+    public static ValidationResult validateProperty(final String propertyName, final MetadataProperty<?> metadataProperty) {
+        return VALIDATION_RULES.getOrDefault(propertyName, MetadataValidationRules::applyDefaultValidationRules)
                 .apply(propertyName, metadataProperty);
     }
 
@@ -107,29 +111,45 @@ public class TokenMetadataValidationRules {
         }
     }
 
-    public static void validateSubjectAndPolicy(final String subject, final String policyId, final ValidationResult validationResult) {
+    public static void validateSubjectAndPolicy(final String subject, final String policy, final ValidationResult validationResult) {
         if (subject == null || subject.isEmpty() || subject.isBlank()) {
             validationResult.addValidationError("Missing, empty or blank subject.");
-        }
-
-        if (subject != null && policyId != null) {
+        } else {
             try {
-                Hex.decode(policyId);
-            } catch (final DecoderException e) {
-                validationResult.addValidationError(String.format("Cannot decode hex string representation of policy hash due to %s", e.getMessage()));
-            }
-
-            try {
+                // check if subject is hex
                 Hex.decode(subject);
             } catch (final DecoderException e) {
                 validationResult.addValidationError(String.format("Cannot decode hex string representation of subject hash due to %s", e.getMessage()));
             }
 
+            if (subject.length() % 2 != 0) {
+                validationResult.addValidationError("Number of characters in the subject must be even to represent a complete byte sequence.");
+            }
+
             if (subject.length() < POLICY_ID_HEX_STRING_LENGTH) {
                 validationResult.addValidationError(String.format("Subject must be at least %d characters long.", POLICY_ID_HEX_STRING_LENGTH));
-            } else {
-                if (!subject.startsWith(policyId)) {
-                    validationResult.addValidationError("If a policy is given the first 28 bytes of the subject should match the policy.");
+            }
+
+            if (policy != null ) {
+                final ObjectMapper cborMapper = new ObjectMapper(new CBORFactory());
+                try {
+                    final PolicyScript policyScript = PolicyScript.fromCborTree(cborMapper.readTree(Hex.decode(policy)));
+                    final String policyId = policyScript.computePolicyId();
+
+                    if (policyId.length() % 2 != 0) {
+                        validationResult.addValidationError("Number of characters in the policyId must be even to represent a complete byte sequence.");
+                    }
+
+                    // check if policy id is hex
+                    Hex.decode(policyId);
+
+                    if (!subject.toLowerCase().startsWith(policyId.toLowerCase())) {
+                        validationResult.addValidationError("If a policy is given the first 28 bytes of the subject should match the policy id.");
+                    }
+                } catch (final IOException e) {
+                    validationResult.addValidationError("Could not deserialize policy script from policy value due to " + e.getMessage());
+                } catch (final DecoderException e) {
+                    validationResult.addValidationError(String.format("Cannot decode hex string representation of policy hash due to %s", e.getMessage()));
                 }
             }
         }
