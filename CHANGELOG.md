@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/cardano-foundation/cf-metadata-core/compare/v1.0.0...v1.1.0) (2024-01-17)
+
+
+### Features
+
+* attempting to force a release ([f876893](https://github.com/cardano-foundation/cf-metadata-core/commit/f8768939a54172072be59b690870a118128faa30))
+
 ## 1.0.0 (2024-01-16)
 
 
