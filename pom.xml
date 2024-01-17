@@ -6,6 +6,9 @@
     <artifactId>core-base</artifactId>
     <version>1.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>CF Metadata Core</description>
+    <url>https://github.com/cardano-foundation/cf-metadata-core.git</url>
 
     <scm>
         <connection>scm:git:git://github.com/cardano-foundation/cf-metadata-core.git</connection>
