@@ -50,7 +50,7 @@ jobs:
         run: mvn --batch-mode --update-snapshots clean verify --file ./pom.xml
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cf-metadata-core
           path: core/target/*.jar
@@ -78,7 +78,7 @@ jobs:
             git push
           fi
       - name: Upload Jacoco coverage report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jacoco-report
           path: core/target/site/jacoco/
