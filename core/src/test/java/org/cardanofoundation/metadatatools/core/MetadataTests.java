@@ -3,10 +3,11 @@ package org.cardanofoundation.metadatatools.core;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.crypto.digests.Blake2bDigest;
 import org.bouncycastle.util.encoders.Hex;
 import org.cardanofoundation.metadatatools.core.cip26.MetadataCreator;
+import org.cardanofoundation.metadatatools.core.cip26.ValidationField;
 import org.cardanofoundation.metadatatools.core.cip26.ValidationResult;
 import org.cardanofoundation.metadatatools.core.crypto.keys.Key;
 import org.cardanofoundation.metadatatools.core.crypto.keys.KeyType;
@@ -24,7 +25,7 @@ import java.nio.file.Paths;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 
-@Log4j2
+@Slf4j
 public class MetadataTests {
 
     private final Path RESOURCE_DIRECTORY = Paths.get("src", "test", "resources");
@@ -104,10 +105,10 @@ public class MetadataTests {
         final Metadata metadata = new Metadata();
         metadata.setSubject("3f36f6048afc298de6254c6a7ecc0f5517cdec72875bb73c3dc5795a414d414e544953");
         metadata.setPolicy("820182018282051a0337a9668200581c2072220a7b83b90ae2b17e5f61d825e4cccc5eb39646a452f3b48ac6");
-        metadata.addProperty("name", new MetadataProperty<>("MelMcCoin", 0, null));
-        metadata.addProperty("description", new MetadataProperty<>("We test with MelMcCoin.", 0, null));
-        metadata.addProperty("ticker", new MetadataProperty<>("MelMcCoin.", 0, null));
-        metadata.addProperty("decimals", new MetadataProperty<>(0, 0, null));
+        metadata.addProperty(ValidationField.NAME, new MetadataProperty<>("MelMcCoin", 0, null));
+        metadata.addProperty(ValidationField.DESCRIPTION, new MetadataProperty<>("We test with MelMcCoin.", 0, null));
+        metadata.addProperty(ValidationField.TICKER, new MetadataProperty<>("MelMcCoin.", 0, null));
+        metadata.addProperty(ValidationField.DECIMALS, new MetadataProperty<>(0, 0, null));
         MetadataCreator.signMetadata(metadata, skey);
 
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -130,24 +131,24 @@ public class MetadataTests {
         final Key verificationKey = signingKey.generateVerificationKey();
         final PolicyScript policyScript = jsonMapper.readValue(RESOURCE_DIRECTORY.resolve("policy.script").toFile().getAbsoluteFile(), PolicyScript.class);
         final Metadata metadata = new Metadata(assetName, policyScript);
-        metadata.addProperty("name", new MetadataProperty<>("MelMcCoin", 0, null));
-        metadata.addProperty("description", new MetadataProperty<>("We test with MelMcCoin", 0, null));
+        metadata.addProperty(ValidationField.NAME, new MetadataProperty<>("MelMcCoin", 0, null));
+        metadata.addProperty(ValidationField.DESCRIPTION, new MetadataProperty<>("We test with MelMcCoin", 0, null));
         MetadataCreator.signMetadata(metadata, signingKey);
         final ValidationResult validationResult = MetadataCreator.validateMetadata(metadata, verificationKey);
         assertThat(validationResult.isValid()).isTrue();
         assertThat(validationResult.getValidationErrors().size()).isEqualTo(0);
         assertThat(metadata.getSubject()).isEqualTo("6ad121cd218e513bdb8ad67afc04d188f859b25d258a694c38269941" + Hex.toHexString(assetName.getBytes(StandardCharsets.UTF_8)));
         assertThat(metadata.getPolicy()).isEqualTo("82008200581cfb864e59bf8620349c3ebe29af5ad0f9ca2e319d39e115eb93aa58a4");
-        assertThat(metadata.getProperties().get("name").getSequenceNumber()).isEqualTo(0);
-        assertThat(metadata.getProperties().get("name").getValue()).isEqualTo("MelMcCoin");
-        assertThat(metadata.getProperties().get("name").getSignatures().size()).isEqualTo(1);
-        assertThat(metadata.getProperties().get("name").getSignatures().get(0).getPublicKey()).isEqualTo(Hex.toHexString(verificationKey.getRawKeyBytes()));
-        assertThat(metadata.getProperties().get("name").getSignatures().get(0).getSignature()).isEqualTo("cd536430044140c36f4987e2f58f3772340af3b8865b0100838065d95b1a439abfe235bc55b52b5894f03c6a008bd313f8579fda410b020bb673c426e80cf602");
-        assertThat(metadata.getProperties().get("description").getSequenceNumber()).isEqualTo(0);
-        assertThat(metadata.getProperties().get("description").getValue()).isEqualTo("We test with MelMcCoin");
-        assertThat(metadata.getProperties().get("description").getSignatures().size()).isEqualTo(1);
-        assertThat(metadata.getProperties().get("description").getSignatures().get(0).getPublicKey()).isEqualTo(Hex.toHexString(verificationKey.getRawKeyBytes()));
-        assertThat(metadata.getProperties().get("description").getSignatures().get(0).getSignature()).isEqualTo("f94ea3ee685c1338c806089f33e83b7de50b953d02bd98d0051209e4cf3f42b3c057ea2748d13ae73110cd7220ccbf80bff5ef2eb90784378bf5537b36d1c207");
+        assertThat(metadata.getProperty(ValidationField.NAME).getSequenceNumber()).isEqualTo(0);
+        assertThat(metadata.getProperty(ValidationField.NAME).getValue()).isEqualTo("MelMcCoin");
+        assertThat(metadata.getProperty(ValidationField.NAME).getSignatures().size()).isEqualTo(1);
+        assertThat(metadata.getProperty(ValidationField.NAME).getSignatures().get(0).getPublicKey()).isEqualTo(Hex.toHexString(verificationKey.getRawKeyBytes()));
+        assertThat(metadata.getProperty(ValidationField.NAME).getSignatures().get(0).getSignature()).isEqualTo("cd536430044140c36f4987e2f58f3772340af3b8865b0100838065d95b1a439abfe235bc55b52b5894f03c6a008bd313f8579fda410b020bb673c426e80cf602");
+        assertThat(metadata.getProperty(ValidationField.DESCRIPTION).getSequenceNumber()).isEqualTo(0);
+        assertThat(metadata.getProperty(ValidationField.DESCRIPTION).getValue()).isEqualTo("We test with MelMcCoin");
+        assertThat(metadata.getProperty(ValidationField.DESCRIPTION).getSignatures().size()).isEqualTo(1);
+        assertThat(metadata.getProperty(ValidationField.DESCRIPTION).getSignatures().get(0).getPublicKey()).isEqualTo(Hex.toHexString(verificationKey.getRawKeyBytes()));
+        assertThat(metadata.getProperty(ValidationField.DESCRIPTION).getSignatures().get(0).getSignature()).isEqualTo("f94ea3ee685c1338c806089f33e83b7de50b953d02bd98d0051209e4cf3f42b3c057ea2748d13ae73110cd7220ccbf80bff5ef2eb90784378bf5537b36d1c207");
     }
 
     @Test
@@ -159,23 +160,23 @@ public class MetadataTests {
         final Key verificationKey = signingKey.generateVerificationKey();
         final PolicyScript policyScript = jsonMapper.readValue(RESOURCE_DIRECTORY.resolve("atLeastPolicy.script").toFile().getAbsoluteFile(), PolicyScript.class);
         final Metadata metadata = new Metadata(assetName, policyScript);
-        metadata.addProperty("name", new MetadataProperty<>("MelMcCoin", 0, null));
-        metadata.addProperty("description", new MetadataProperty<>("We test with MelMcCoin", 0, null));
+        metadata.addProperty(ValidationField.NAME, new MetadataProperty<>("MelMcCoin", 0, null));
+        metadata.addProperty(ValidationField.DESCRIPTION, new MetadataProperty<>("We test with MelMcCoin", 0, null));
         MetadataCreator.signMetadata(metadata, signingKey);
         final ValidationResult validationResult = MetadataCreator.validateMetadata(metadata, verificationKey);
         assertThat(validationResult.isValid()).isTrue();
         assertThat(validationResult.getValidationErrors().size()).isEqualTo(0);
         assertThat(metadata.getSubject()).isEqualTo("b0537110d01bbf847e48edf448d0f411d121e69ec31be256f46b1096" + Hex.toHexString(assetName.getBytes(StandardCharsets.UTF_8)));
         assertThat(metadata.getPolicy()).isEqualTo("82018303018382051902588200581cfb864e59bf8620349c3ebe29af5ad0f9ca2e319d39e115eb93aa58a482041901f4");
-        assertThat(metadata.getProperties().get("name").getSequenceNumber()).isEqualTo(0);
-        assertThat(metadata.getProperties().get("name").getValue()).isEqualTo("MelMcCoin");
-        assertThat(metadata.getProperties().get("name").getSignatures().size()).isEqualTo(1);
-        assertThat(metadata.getProperties().get("name").getSignatures().get(0).getPublicKey()).isEqualTo(Hex.toHexString(verificationKey.getRawKeyBytes()));
-        assertThat(metadata.getProperties().get("name").getSignatures().get(0).getSignature()).isEqualTo("65f132beb84e8a5447172f27f787a8f88e855b218af0cb8d1b2373b08e32cd577abf063790d260835d5359e98e00f8e2c1d27b644e4ed3aadefb54815c6c990e");
-        assertThat(metadata.getProperties().get("description").getSequenceNumber()).isEqualTo(0);
-        assertThat(metadata.getProperties().get("description").getValue()).isEqualTo("We test with MelMcCoin");
-        assertThat(metadata.getProperties().get("description").getSignatures().size()).isEqualTo(1);
-        assertThat(metadata.getProperties().get("description").getSignatures().get(0).getPublicKey()).isEqualTo(Hex.toHexString(verificationKey.getRawKeyBytes()));
-        assertThat(metadata.getProperties().get("description").getSignatures().get(0).getSignature()).isEqualTo("174d4225bb8a82f7def7dd49656d7d80abea298a2501338c9f9a94c577e131e7eb37fd0a9d6ebf556a0fe74f7f4533c4534c235edafc039131277a99b0e34b07");
+        assertThat(metadata.getProperty(ValidationField.NAME).getSequenceNumber()).isEqualTo(0);
+        assertThat(metadata.getProperty(ValidationField.NAME).getValue()).isEqualTo("MelMcCoin");
+        assertThat(metadata.getProperty(ValidationField.NAME).getSignatures().size()).isEqualTo(1);
+        assertThat(metadata.getProperty(ValidationField.NAME).getSignatures().get(0).getPublicKey()).isEqualTo(Hex.toHexString(verificationKey.getRawKeyBytes()));
+        assertThat(metadata.getProperty(ValidationField.NAME).getSignatures().get(0).getSignature()).isEqualTo("65f132beb84e8a5447172f27f787a8f88e855b218af0cb8d1b2373b08e32cd577abf063790d260835d5359e98e00f8e2c1d27b644e4ed3aadefb54815c6c990e");
+        assertThat(metadata.getProperty(ValidationField.DESCRIPTION).getSequenceNumber()).isEqualTo(0);
+        assertThat(metadata.getProperty(ValidationField.DESCRIPTION).getValue()).isEqualTo("We test with MelMcCoin");
+        assertThat(metadata.getProperty(ValidationField.DESCRIPTION).getSignatures().size()).isEqualTo(1);
+        assertThat(metadata.getProperty(ValidationField.DESCRIPTION).getSignatures().get(0).getPublicKey()).isEqualTo(Hex.toHexString(verificationKey.getRawKeyBytes()));
+        assertThat(metadata.getProperty(ValidationField.DESCRIPTION).getSignatures().get(0).getSignature()).isEqualTo("174d4225bb8a82f7def7dd49656d7d80abea298a2501338c9f9a94c577e131e7eb37fd0a9d6ebf556a0fe74f7f4533c4534c235edafc039131277a99b0e34b07");
     }
 }

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import lombok.*;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters;
 import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
 import org.bouncycastle.math.ec.rfc8032.Ed25519;
@@ -19,7 +19,7 @@ import java.util.Arrays;
  * Represents cryptographic keys. Support raw binary format, text envelope (JSON) format and CIP-16 compliant key
  * representations based on bech32 encoding and CIP-5 compliant prefixes.
  */
-@Log4j2
+@Slf4j
 @Data
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Key {

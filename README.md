@@ -1,201 +1,286 @@
-[![License](https://img.shields.io/github/license/cardano-foundation/cf-metadata-core)](https://github.com/cardano-foundation/cf-metadata-core/blob/main/LICENSE)
-![GitHub top language](https://img.shields.io/github/languages/top/cardano-foundation/cf-metadata-core)
-[![Build](https://github.com/cardano-foundation/cf-metadata-core/actions/workflows/main.yaml/badge.svg)](https://github.com/cardano-foundation/cf-metadata-core/actions/workflows/main.yaml)
-[![CodeQL](https://github.com/cardano-foundation/cf-metadata-core/actions/workflows/codeql.yaml/badge.svg)](https://github.com/cardano-foundation/cf-metadata-core/actions/workflows/codeql.yaml)
-![coverage](https://github.com/cardano-foundation/cf-metadata-core/blob/badges/jacoco.svg)
-![branches](https://github.com/cardano-foundation/cf-metadata-core/blob/badges/branches.svg)
-[![Issues](https://img.shields.io/github/issues/cardano-foundation/cf-metadata-core)](https://github.com/cardano-foundation/cf-metadata-core/issues)
+[![License](https://img.shields.io/github/license/cardano-foundation/cf-tokens-cip26)](https://github.com/cardano-foundation/cf-tokens-cip26/blob/main/LICENSE)
+![GitHub top language](https://img.shields.io/github/languages/top/cardano-foundation/cf-tokens-cip26)
+[![Build](https://github.com/cardano-foundation/cf-tokens-cip26/actions/workflows/main.yaml/badge.svg)](https://github.com/cardano-foundation/cf-tokens-cip26/actions/workflows/main.yaml)
+[![CodeQL](https://github.com/cardano-foundation/cf-tokens-cip26/actions/workflows/codeql.yaml/badge.svg)](https://github.com/cardano-foundation/cf-tokens-cip26/actions/workflows/codeql.yaml)
+![coverage](https://github.com/cardano-foundation/cf-tokens-cip26/blob/badges/jacoco.svg)
+![branches](https://github.com/cardano-foundation/cf-tokens-cip26/blob/badges/branches.svg)
+[![Issues](https://img.shields.io/github/issues/cardano-foundation/cf-tokens-cip26)](https://github.com/cardano-foundation/cf-tokens-cip26/issues)
 
 ---
 
-# Cardano Java Utility lib
+# CIP-26 Token Metadata Java Library
 
-Collection of utility functions that help you build on Cardano
+Utility library for building CIP-26 compliant token metadata on Cardano
 
 ## Introduction
 
-This library is a collections of several functions that we found useful when building applications on Cardano using the Java programming language. It's main focus is the implementation of the features and cryptographic functions required by [CIP-26](https://github.com/cardano-foundation/CIPs/tree/master/CIP-0026).
+This library provides utility classes and cryptographic functions for working with [CIP-26](https://github.com/cardano-foundation/CIPs/tree/master/CIP-0026) token metadata on Cardano. CIP-26 defines an offchain metadata standard for Cardano native tokens with support for metadata signing and verification.
 
-As the development continues the library will be extended. If you are looking for a more complete Java library with features like transaction serialization and transmission check out the excellent [Bloxbean Cardano Client Lib](https://github.com/bloxbean/cardano-client-lib)
+The library is specifically focused on CIP-26 metadata handling, validation, signing, and verification. If you are looking for a more complete Java library with features like transaction serialization and transmission check out the excellent [Bloxbean Cardano Client Lib](https://github.com/bloxbean/cardano-client-lib)
 
 ## Getting started
 
-### Integrate in your project
+### Add to Your Project
 
-At the moment only the snapshot version is served out via GitHub packages. This will for sure soon change but at the moment you need some additional configuration for Maven to access the prebuilt Snapshot package.
+The library is published to Maven Central and can be used with any JVM build tool.
 
-Create or modify your Maven `settings.xml` file (most likely located in your user folder in a folder called `.m2`). The file must contain an additional repository which points to the our GitHub repository and you must have a personal access token (PAT) created within your GitHub profile settings in order to access the repository.
+#### Maven
+
 ```xml
-<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
-    <activeProfiles>
-        <activeProfile>github</activeProfile>
-    </activeProfiles>
-
-    <profiles>
-        <profile>
-            <id>github</id>
-            <repositories>
-                <repository>
-                    <id>central</id>
-                    <url>https://repo1.maven.org/maven2/</url>
-                </repository>
-                <repository>
-                    <id>github</id>
-                    <url>https://maven.pkg.github.com/cardano-foundation/cf-metadata-core</url>
-                    <snapshots>
-                        <enabled>true</enabled>
-                    </snapshots>
-                </repository>
-            </repositories>
-        </profile>
-    </profiles>
-
-    <servers>
-        <server>
-            <id>github</id>
-            <username>your_github_username_goes_here</username>
-            <password>your_personal_access_token_goes_here</password>
-        </server>
-    </servers>
-</settings>
-```
-
-Alternatively you can reference the GitHub packages repository directly within your `pom.xml` file but it is not advisable to store your PAT in there and maybe accidentally commit it with your other changes:
-```xml
-<repositories>
-        <repository>
-            <id>central</id>
-            <url>https://repo1.maven.org/maven2/</url>
-        </repository>
-        <repository>
-            <id>github</id>
-            <url>https://maven.pkg.github.com/cardano-foundation/cf-metadata-core</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-```
-
-You can now reference the the dependency to the lib in your `pom.xml` with following snippet:
-```xml
-...
 <dependency>
     <groupId>org.cardanofoundation.metadatatools</groupId>
-    <artifactId>core</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <artifactId>cf-tokens-cip26</artifactId>
+    <version>2.0.0-SNAPSHOT</version>
 </dependency>
-...
 ```
 
-### Example: Build and sign metadata
+#### Gradle
+
+```groovy
+implementation 'org.cardanofoundation.metadatatools:cf-tokens-cip26:2.0.0-SNAPSHOT'
+```
+
+#### Gradle (Kotlin DSL)
+
+```kotlin
+implementation("org.cardanofoundation.metadatatools:cf-tokens-cip26:2.0.0-SNAPSHOT")
+```
+
+#### SBT
+
+```scala
+libraryDependencies += "org.cardanofoundation.metadatatools" % "cf-tokens-cip26" % "2.0.0-SNAPSHOT"
+```
+
+### Quick Start Example
+
+This example demonstrates creating, signing, and validating CIP-26 compliant token metadata.
 
 ```java
-// This Jackson ObjectMapper instance is used for JSON de/serialization.
-final ObjectMapper objectMapper = new ObjectMapper();
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.cardanofoundation.metadatatools.core.cip26.MetadataCreator;
+import org.cardanofoundation.metadatatools.core.cip26.ValidationField;
+import org.cardanofoundation.metadatatools.core.cip26.model.*;
+import org.cardanofoundation.metadatatools.core.crypto.keys.Key;
+
+// Configure Jackson ObjectMapper for JSON serialization
+ObjectMapper objectMapper = new ObjectMapper();
 objectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
 objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
-// Step 1: Load the signing key from a Cardano json envelope representation containing the key material of the
-// signing key encoded as CBOR represented as a hex string. We load the key from a String but nothing prevents
-// us from loading it from a file directly.
-final KeyTextEnvelope signingKeyEnvelope = objectMapper.readValue("""
-        {
-            "type": "PaymentSigningKeyShelley_ed25519",
-            "description": "Payment Signing Key",
-            "cborHex": "58202b1b08bb20487b8dae9dac1445462d96fb9c4244e49e87b5d0785b9a2960a60b"
-        }
-        """, KeyTextEnvelope.class);
-final Key signingKey = Key.fromTextEnvelope(signingKeyEnvelope);
+// Load signing key from Cardano key text envelope
+KeyTextEnvelope signingKeyEnvelope = objectMapper.readValue("""
+    {
+        "type": "PaymentSigningKeyShelley_ed25519",
+        "description": "Payment Signing Key",
+        "cborHex": "58202b1b08bb20487b8dae9dac1445462d96fb9c4244e49e87b5d0785b9a2960a60b"
+    }
+    """, KeyTextEnvelope.class);
+Key signingKey = Key.fromTextEnvelope(signingKeyEnvelope);
 
-// Step 2: Load the monetary policy script used within the token minting operation. We load it from a String.
-// Usually this will be loaded from the same file containing the policy that was used during the minting.
-final String policyJson = """
-        {
-            "type": "atLeast",
-            "required": 2,
-            "scripts":
-            [
-            {
-                "type": "before",
-                "slot": 600
-            },
-            {
-                "type": "sig",
-                "keyHash": "c04cc33b367f233e6ef0f15b05e2225b1974f4980611fb5852f6d01e"
-            },
-            {
-                "type": "after",
-                "slot": 500
-            }
-            ]
-        }""";
-final PolicyScript policyScript = objectMapper.readValue(policyJson, PolicyScript.class);
+// Load policy script (used during token minting)
+String policyJson = """
+    {
+        "type": "sig",
+        "keyHash": "c04cc33b367f233e6ef0f15b05e2225b1974f4980611fb5852f6d01e"
+    }""";
+PolicyScript policyScript = objectMapper.readValue(policyJson, PolicyScript.class);
 
-// Step 3: Create the actual metadata providing some properties.
-final TokenMetadata metadata = new TokenMetadata("CfTestCoin", policyScript, Map.ofEntries(
-        entry("name", new TokenMetadataProperty<>("CfTestCoin", 0, null)),
-        entry("description", new TokenMetadataProperty<>("We test with CfTestCoin.", 0, null)),
-        entry("ticker", new TokenMetadataProperty<>("CfTstCn", 0, null)),
-        entry("decimals", new TokenMetadataProperty<>(6, 0, null))
-));
+// Create metadata with properties using simplified constructor
+Metadata metadata = new Metadata("TestToken", policyScript);
+metadata.addProperty(ValidationField.NAME, new MetadataProperty<>("Test Token"));
+metadata.addProperty(ValidationField.DESCRIPTION, new MetadataProperty<>("A test token for demonstration"));
+metadata.addProperty(ValidationField.TICKER, new MetadataProperty<>("TEST"));
+metadata.addProperty(ValidationField.DECIMALS, new MetadataProperty<>(6));
 
-// Step 4: Sign the metadata with the signing key.
-TokenMetadataCreator.signTokenMetadata(metadata, signingKey);
+// Sign the metadata
+MetadataCreator.signMetadata(metadata, signingKey);
 
-// Actually the example is over but usually you want to serialize your metadata to JSON or load metadata from
-// JSON and perform a validation based on a certain verification key or likewise. The next steps are about those
-// things.
+// Serialize to JSON
+String metadataJson = objectMapper.writeValueAsString(metadata);
+System.out.println("Metadata JSON: " + metadataJson);
 
-// Step 5: Serialize the metadata to its string representation.
-final String tokenMetadataAsJson = objectMapper.writeValueAsString(metadata);
+// Deserialize from JSON
+Metadata deserializedMetadata = objectMapper.readValue(metadataJson, Metadata.class);
 
-// Step 6: Deserialize the metadata from its string representation.
-final TokenMetadata metadataDeserialized = objectMapper.readValue(tokenMetadataAsJson, TokenMetadata.class);
+// Load verification key
+KeyTextEnvelope verificationKeyEnvelope = objectMapper.readValue("""
+    {
+        "type": "PaymentVerificationKeyShelley_ed25519",
+        "description": "Payment Verification Key",
+        "cborHex": "58208f26099728b91992ba5a06d8d91152ea6bd9aa1d944334fa96a4541b583c2634"
+    }
+    """, KeyTextEnvelope.class);
+Key verificationKey = Key.fromTextEnvelope(verificationKeyEnvelope);
 
-// Step 7: Load the verification key
-final KeyTextEnvelope verificationKeyEnvelope = objectMapper.readValue("""
-        {
-            "type": "PaymentVerificationKeyShelley_ed25519",
-            "description": "Payment Verification Key",
-            "cborHex": "58208f26099728b91992ba5a06d8d91152ea6bd9aa1d944334fa96a4541b583c2634"
-        }
-        """, KeyTextEnvelope.class);
-final Key verificationKey = Key.fromTextEnvelope(verificationKeyEnvelope);
-
-// Step 8: Try to validate the metadata given a verification key that must be included in the signatures.
-log.info((TokenMetadataCreator.validateTokenMetadata(metadataDeserialized, verificationKey).isValid())
-        ? "verification succeeded"
-        : "verification failed");
+// Validate metadata with verification key
+ValidationResult result = MetadataCreator.validateMetadata(deserializedMetadata, verificationKey);
+if (result.isValid()) {
+    System.out.println("✓ Metadata validation succeeded");
+} else {
+    System.out.println("✗ Metadata validation failed");
+    result.getValidationErrors().forEach(error ->
+        System.out.println("  - " + error.getField() + ": " + error.getMessage())
+    );
+}
 ```
 
-## Build from source
-Clone the repo
-```console
-$ git clone git@github.com:cardano-foundation/cf-metadata-core.git
+## Build from Source
+
+Clone the repository:
+
+```bash
+git clone git@github.com:cardano-foundation/cf-tokens-cip26.git
+cd cf-tokens-cip26
 ```
 
-Build with Maven
-```console
-$ mvn package
+Build with Maven:
+
+```bash
+mvn clean package
 ```
+
+Run tests:
+
+```bash
+mvn test
+```
+
+## Requirements
+
+- Java 21 or higher
+- Maven 3.6+
 
 ## Features
 
-Offchain metadata related:
-- [x] Support of various key serialization formats used by Cardano
-- [x] Serialization of CIP-26 compliant offchain metadata format
-- [x] Signing of CIP-26 compliant offchain metadata
+### CIP-26 Token Metadata
+- ✅ **Metadata Creation & Management**: Type-safe API for creating and managing token metadata
+- ✅ **Property Validation**: Built-in validation for all CIP-26 properties (name, description, ticker, decimals, logo)
+- ✅ **Cryptographic Signing**: Sign metadata with Ed25519 keys
+- ✅ **Signature Verification**: Verify metadata authenticity with public keys
+- ✅ **JSON Serialization**: Full Jackson support for JSON serialization/deserialization
+- ✅ **Strongly-Typed API**: Use `ValidationField` enum for type-safe property access
 
-Later:
-- [ ] peer-2-peer networking protocol for decentralized CIP-26 registry implementation
+### Cardano Cryptography
+- ✅ **Multiple Key Formats**: Support for Cardano key text envelopes, bech32, and hex formats
+- ✅ **Policy Scripts**: Parse and compute policy IDs from native scripts
+- ✅ **CBOR Support**: Handle CBOR-encoded data structures
+
+## API Overview
+
+### Creating Metadata
+
+```java
+// Create metadata with required fields
+Metadata metadata = new Metadata("MyToken");
+metadata.addProperty(ValidationField.NAME, new MetadataProperty<>("My Token"));
+metadata.addProperty(ValidationField.DESCRIPTION, new MetadataProperty<>("Token description"));
+
+// Add optional fields
+metadata.addProperty(ValidationField.TICKER, new MetadataProperty<>("MTK"));
+metadata.addProperty(ValidationField.DECIMALS, new MetadataProperty<>(6));
+metadata.addProperty(ValidationField.LOGO, new MetadataProperty<>("data:image/png;base64,..."));
+metadata.addProperty(ValidationField.URL, new MetadataProperty<>("https://example.com"));
+```
+
+### Validating Metadata
+
+```java
+// Validate metadata structure and properties
+ValidationResult result = MetadataCreator.validateMetadata(metadata);
+
+if (!result.isValid()) {
+    result.getValidationErrors().forEach(error -> {
+        System.out.println("Field: " + error.getField());
+        System.out.println("Error: " + error.getMessage());
+    });
+}
+```
+
+### Signing Metadata
+
+```java
+// Sign all properties
+MetadataCreator.signMetadata(metadata, signingKey);
+
+// Sign specific property
+MetadataCreator.signProperty(metadata, ValidationField.NAME, signingKey);
+```
+
+### Working with Keys
+
+```java
+// Load from text envelope
+Key key = Key.fromTextEnvelope(keyEnvelope);
+
+// Load from bech32
+Key key = Key.fromBech32("addr_vk1...");
+
+// Load from hex
+Key key = Key.fromHex("5820...");
+```
+
+## CIP-26 Specification
+
+This library implements [CIP-26: Cardano Off-Chain Metadata](https://github.com/cardano-foundation/CIPs/tree/master/CIP-0026), which defines:
+
+- Standard metadata properties for native tokens
+- Cryptographic signing and verification mechanisms
+- Subject-based identification for token metadata
+- Validation rules for metadata properties
+
+### Supported Properties
+
+| Property | Type | Required | Max Length | Description |
+|----------|------|----------|------------|-------------|
+| `name` | String | ✅ Yes | 50 | Token display name |
+| `description` | String | ✅ Yes | 500 | Token description |
+| `ticker` | String | ❌ No | 2-9 | Short token symbol |
+| `decimals` | Integer | ❌ No | ≥ 0 | Number of decimal places |
+| `logo` | String | ❌ No | 87,400 | Base64-encoded image |
+| `url` | String | ❌ No | 250 | Project or token URL |
 
 ## Contributing
 
-File an issue or a PR or reach out directly to us if you want to contribute.
+We welcome contributions! Here's how you can help:
 
-When contributing to this project and interacting with others, please follow our [Contributing Guidelines](./CONTRIBUTING.md) and [Code of Conduct](./CODE-OF-CONDUCT.md).
+- 🐛 **Report bugs**: [Open an issue](https://github.com/cardano-foundation/cf-tokens-cip26/issues/new) with a clear description
+- 💡 **Suggest features**: Share your ideas in [Discussions](https://github.com/cardano-foundation/cf-tokens-cip26/discussions)
+- 📖 **Improve documentation**: Help us make the docs better
+- 🔧 **Submit pull requests**: Fix bugs or add features
+
+Please read our [Contributing Guidelines](./CONTRIBUTING.md) and [Code of Conduct](./CODE-OF-CONDUCT.md) before contributing.
+
+### Development Setup
+
+```bash
+# Clone the repository
+git clone git@github.com:cardano-foundation/cf-tokens-cip26.git
+cd cf-tokens-cip26
+
+# Build and run tests
+mvn clean install
+
+# Run tests with coverage
+mvn clean test jacoco:report
+```
+
+## License
+
+This project is licensed under the **Mozilla Public License 2.0** (MPL-2.0). See [LICENSE](./LICENSE) for details.
+
+## Support
+
+- 📚 [Wiki Documentation](https://github.com/cardano-foundation/cf-tokens-cip26/wiki)
+- 💬 [GitHub Discussions](https://github.com/cardano-foundation/cf-tokens-cip26/discussions)
+- 🐛 [Issue Tracker](https://github.com/cardano-foundation/cf-tokens-cip26/issues)
+- 📮 [Cardano StackExchange](https://cardano.stackexchange.com/) (use tag `cip26`)
+
+## Acknowledgments
+
+Built with ❤️ by the [Cardano Foundation](https://cardanofoundation.org/)
 
 ---
 
-Thanks for visiting and enjoy :heart:!
+**Note**: This library focuses on CIP-26 metadata utilities. For full Cardano transaction capabilities, check out [Bloxbean Cardano Client Lib](https://github.com/bloxbean/cardano-client-lib).

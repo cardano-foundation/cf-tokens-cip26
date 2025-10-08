@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import org.bouncycastle.util.encoders.Hex;
+import org.cardanofoundation.metadatatools.core.cip26.ValidationField;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -15,6 +16,7 @@ import java.util.Map;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Metadata {
+
     private static final List<String> REQUIRED_PROPERTIES = List.of("name", "description");
 
     private String subject;
@@ -90,6 +92,45 @@ public class Metadata {
         }
     }
 
+    /**
+     * Adds a property with strongly-typed field enum.
+     *
+     * @param field the property field (must be a property field like NAME, DESCRIPTION, etc.)
+     * @param property the property value
+     * @throws IllegalArgumentException if field is null or not a property field
+     */
+    public void addProperty(final ValidationField field, final MetadataProperty<?> property) {
+        if (field == null) {
+            throw new IllegalArgumentException("field cannot be null.");
+        }
+        if (!field.isProperty()) {
+            throw new IllegalArgumentException("field must be a property field, but got: " + field);
+        }
+
+        if (property != null) {
+            this.properties.put(field.getKey(), property);
+        } else {
+            this.properties.remove(field.getKey());
+        }
+    }
+
+    /**
+     * Gets a property by strongly-typed field enum.
+     *
+     * @param field the property field
+     * @return the property value, or null if not present
+     * @throws IllegalArgumentException if field is null or not a property field
+     */
+    public MetadataProperty<?> getProperty(final ValidationField field) {
+        if (field == null) {
+            throw new IllegalArgumentException("field cannot be null.");
+        }
+        if (!field.isProperty()) {
+            throw new IllegalArgumentException("field must be a property field, but got: " + field);
+        }
+        return this.properties.get(field.getKey());
+    }
+
     public void removeProperty(final String propertyName) {
         if (propertyName == null) {
             throw new IllegalArgumentException("propertyName cannot be null");
@@ -103,10 +144,27 @@ public class Metadata {
         this.properties.remove(propertyNameSanitized);
     }
 
+    /**
+     * Removes a property by strongly-typed field enum.
+     *
+     * @param field the property field
+     * @throws IllegalArgumentException if field is null or not a property field
+     */
+    public void removeProperty(final ValidationField field) {
+        if (field == null) {
+            throw new IllegalArgumentException("field cannot be null");
+        }
+        if (!field.isProperty()) {
+            throw new IllegalArgumentException("field must be a property field, but got: " + field);
+        }
+        this.properties.remove(field.getKey());
+    }
+
     public static String sanitizePropertyName(final String propertyName) {
         if (propertyName == null) {
             throw new IllegalArgumentException("propertyName cannot be null.");
         }
         return propertyName.trim();
     }
+
 }

@@ -6,6 +6,7 @@ import org.bouncycastle.util.encoders.Hex;
 import java.util.List;
 
 public class Hashing {
+
     public static final int BLAKE2B_224_DIGEST_BYTES_LENGTH = 28;
     public static final int BLAKE2B_256_DIGEST_BYTES_LENGTH = 32;
 
@@ -50,4 +51,5 @@ public class Hashing {
     public static String blake2b256Hex(final List<byte[]> inputs) {
         return Hex.toHexString(blake2b256Digest(inputs));
     }
+
 }
