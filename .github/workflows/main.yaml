@@ -52,7 +52,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: cf-metadata-core
+          name: cf-tokens-cip68
           path: core/target/*.jar
 
       - name: Generate Jacoco Badge

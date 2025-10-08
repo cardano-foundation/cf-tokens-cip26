@@ -9,6 +9,7 @@ import java.util.Map;
 import static java.util.Map.entry;
 
 public enum KeyTextEnvelopeType {
+
     PAYMENT_EXTENDED_SIGNING_KEY_SHELLEY_ED25519_BIP32("PaymentExtendedSigningKeyShelley_ed25519_bip32", "Payment Signing Key", KeyType.ACCOUNT_EXTENDED_SIGNING_KEY_ED25519),
     PAYMENT_EXTENDED_VERIFICATION_KEY_SHELLEY_ED25519_BIP32("PaymentExtendedVerificationKeyShelley_ed25519_bip32", "Payment Verification Key", KeyType.ACCOUNT_EXTENDED_VERIFICATION_KEY_ED25519),
     PAYMENT_SIGNING_KEY_SHELLEY_ED25519("PaymentSigningKeyShelley_ed25519", "Payment Signing Key", KeyType.ACCOUNT_SIGNING_KEY_ED25519),
@@ -65,6 +66,7 @@ public enum KeyTextEnvelopeType {
 
     public static boolean isCompatibleWith(final KeyTextEnvelopeType envelopeKeyType, final KeyType keyType) {
         final List<KeyType> supportedKeyTypes = KeyTextEnvelopeType.KEY_TYPE_COMPATIBILITY_MATRIX.getOrDefault(envelopeKeyType, List.of());
+
         return supportedKeyTypes.contains(keyType);
     }
 
