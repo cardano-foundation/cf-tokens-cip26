@@ -11,6 +11,7 @@
     <artifactId>cf-tokens-cip26</artifactId>
     <name>cf-tokens-cip26</name>
     <description>CIP-26 utility classes for Cardano token metadata handling.</description>
+    <url>https://github.com/cardano-foundation/cf-tokens-cip26.git</url>
 
     <packaging>jar</packaging>
 
