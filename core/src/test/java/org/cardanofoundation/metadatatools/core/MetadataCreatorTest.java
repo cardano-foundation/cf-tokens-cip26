@@ -355,6 +355,99 @@ public class MetadataCreatorTest {
                 assertThat(result.isValid()).isTrue();
                 assertThat(result.getValidationErrors()).isEmpty();
             }
+
+            @Test
+            @DisplayName("Should fail when signature is tampered")
+            void shouldFailWhenSignatureIsTampered() throws IOException {
+                final Metadata metadata = new Metadata("test", policyScript);
+                metadata.addProperty(ValidationField.NAME, new MetadataProperty<>("Test Token", 0, null));
+                metadata.addProperty(ValidationField.DESCRIPTION, new MetadataProperty<>("Test Description", 0, null));
+
+                MetadataCreator.signMetadata(metadata, signingKey);
+
+                // Tamper with the signature by changing one character
+                final String originalSignature = metadata.getProperty(ValidationField.NAME).getSignatures().get(0).getSignature();
+                final String tamperedSignature = "0" + originalSignature.substring(1);
+                metadata.getProperty(ValidationField.NAME).getSignatures().get(0).setSignature(tamperedSignature);
+
+                final ValidationResult result = MetadataCreator.validateMetadata(metadata, verificationKey);
+
+                assertThat(result.isValid()).isFalse();
+                assertThat(result.getValidationErrors()).isNotEmpty();
+                assertThat(result.getValidationErrors().toString()).contains("signature verification failed");
+            }
+
+            @Test
+            @DisplayName("Should fail when value is changed after signing")
+            void shouldFailWhenValueIsChangedAfterSigning() throws IOException {
+                final Metadata metadata = new Metadata("test", policyScript);
+                metadata.addProperty(ValidationField.NAME, new MetadataProperty<>("Test Token", 0, null));
+                metadata.addProperty(ValidationField.DESCRIPTION, new MetadataProperty<>("Test Description", 0, null));
+
+                MetadataCreator.signMetadata(metadata, signingKey);
+
+                // Change the value after signing
+                @SuppressWarnings("unchecked")
+                final MetadataProperty<String> nameProperty = (MetadataProperty<String>) metadata.getProperty(ValidationField.NAME);
+                nameProperty.setValue("Modified Token");
+
+                final ValidationResult result = MetadataCreator.validateMetadata(metadata, verificationKey);
+
+                assertThat(result.isValid()).isFalse();
+                assertThat(result.getValidationErrors()).isNotEmpty();
+                assertThat(result.getValidationErrors().toString()).contains("signature verification failed");
+            }
+
+            @Test
+            @DisplayName("Should fail when sequence number is changed after signing")
+            void shouldFailWhenSequenceNumberIsChangedAfterSigning() throws IOException {
+                final Metadata metadata = new Metadata("test", policyScript);
+                metadata.addProperty(ValidationField.NAME, new MetadataProperty<>("Test Token", 0, null));
+                metadata.addProperty(ValidationField.DESCRIPTION, new MetadataProperty<>("Test Description", 0, null));
+
+                MetadataCreator.signMetadata(metadata, signingKey);
+
+                // Change the sequence number after signing
+                metadata.getProperty(ValidationField.NAME).setSequenceNumber(1);
+
+                final ValidationResult result = MetadataCreator.validateMetadata(metadata, verificationKey);
+
+                assertThat(result.isValid()).isFalse();
+                assertThat(result.getValidationErrors()).isNotEmpty();
+                assertThat(result.getValidationErrors().toString()).contains("signature verification failed");
+            }
+
+            @Test
+            @DisplayName("Should fail with invalid signature hex format")
+            void shouldFailWithInvalidSignatureHexFormat() throws IOException {
+                final Metadata metadata = new Metadata("test", policyScript);
+                metadata.addProperty(ValidationField.NAME, new MetadataProperty<>("Test Token", 0, null));
+                metadata.addProperty(ValidationField.DESCRIPTION, new MetadataProperty<>("Test Description", 0, null));
+
+                MetadataCreator.signMetadata(metadata, signingKey);
+
+                // Set invalid hex in signature
+                metadata.getProperty(ValidationField.NAME).getSignatures().get(0).setSignature("gggggg");
+
+                assertThatThrownBy(() -> MetadataCreator.validateMetadata(metadata, verificationKey))
+                        .isInstanceOf(RuntimeException.class);
+            }
+
+            @Test
+            @DisplayName("Should fail with invalid public key hex format")
+            void shouldFailWithInvalidPublicKeyHexFormat() throws IOException {
+                final Metadata metadata = new Metadata("test", policyScript);
+                metadata.addProperty(ValidationField.NAME, new MetadataProperty<>("Test Token", 0, null));
+                metadata.addProperty(ValidationField.DESCRIPTION, new MetadataProperty<>("Test Description", 0, null));
+
+                MetadataCreator.signMetadata(metadata, signingKey);
+
+                // Set invalid hex in public key
+                metadata.getProperty(ValidationField.NAME).getSignatures().get(0).setPublicKey("zzzzz");
+
+                assertThatThrownBy(() -> MetadataCreator.validateMetadata(metadata))
+                        .isInstanceOf(RuntimeException.class);
+            }
         }
     }
 
@@ -705,6 +798,120 @@ public class MetadataCreatorTest {
 
                 assertThat(signature1).isNotEqualTo(signature2);
             }
+        }
+    }
+
+    @Nested
+    @DisplayName("Multi-Signature Tests")
+    class MultiSignatureTests {
+
+        @Test
+        @DisplayName("Should sign property with multiple keys")
+        void shouldSignPropertyWithMultipleKeys() throws IOException {
+            final Metadata metadata = new Metadata("test", policyScript);
+            metadata.addProperty(ValidationField.NAME, new MetadataProperty<>("Test Token", 0, null));
+            metadata.addProperty(ValidationField.DESCRIPTION, new MetadataProperty<>("Test Description", 0, null));
+
+            // Sign with first key
+            MetadataCreator.signMetadata(metadata, signingKey);
+
+            // Load and use a second key
+            final KeyTextEnvelope signingEnvelope2 = jsonMapper.readValue(
+                    RESOURCE_DIRECTORY.resolve("payment.skey").toFile(),
+                    KeyTextEnvelope.class
+            );
+            final Key signingKey2 = Key.fromTextEnvelope(signingEnvelope2);
+            final Key verificationKey2 = signingKey2.generateVerificationKey();
+
+            // Sign with second key
+            MetadataCreator.signMetadata(metadata, signingKey2);
+
+            // Both properties should have 2 signatures
+            assertThat(metadata.getProperty(ValidationField.NAME).getSignatures()).hasSize(2);
+            assertThat(metadata.getProperty(ValidationField.DESCRIPTION).getSignatures()).hasSize(2);
+
+            // Verify with first key
+            ValidationResult result1 = MetadataCreator.validateMetadata(metadata, verificationKey);
+            assertThat(result1.isValid()).isTrue();
+
+            // Verify with second key
+            ValidationResult result2 = MetadataCreator.validateMetadata(metadata, verificationKey2);
+            assertThat(result2.isValid()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Should validate metadata with multiple signatures without specific verification key")
+        void shouldValidateMetadataWithMultipleSignaturesWithoutKey() throws IOException {
+            final Metadata metadata = new Metadata("test", policyScript);
+            metadata.addProperty(ValidationField.NAME, new MetadataProperty<>("Test Token", 0, null));
+            metadata.addProperty(ValidationField.DESCRIPTION, new MetadataProperty<>("Test Description", 0, null));
+
+            // Sign with first key
+            MetadataCreator.signMetadata(metadata, signingKey);
+
+            // Load and sign with second key
+            final KeyTextEnvelope signingEnvelope2 = jsonMapper.readValue(
+                    RESOURCE_DIRECTORY.resolve("payment.skey").toFile(),
+                    KeyTextEnvelope.class
+            );
+            final Key signingKey2 = Key.fromTextEnvelope(signingEnvelope2);
+            MetadataCreator.signMetadata(metadata, signingKey2);
+
+            // Validate without providing verification key (validates all signatures)
+            final ValidationResult result = MetadataCreator.validateMetadata(metadata);
+
+            assertThat(result.isValid()).isTrue();
+            assertThat(result.getValidationErrors()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Should detect invalid signature among multiple valid signatures")
+        void shouldDetectInvalidSignatureAmongMultipleValid() throws IOException {
+            final Metadata metadata = new Metadata("test", policyScript);
+            metadata.addProperty(ValidationField.NAME, new MetadataProperty<>("Test Token", 0, null));
+            metadata.addProperty(ValidationField.DESCRIPTION, new MetadataProperty<>("Test Description", 0, null));
+
+            // Sign with first key
+            MetadataCreator.signMetadata(metadata, signingKey);
+
+            // Load and sign with second key
+            final KeyTextEnvelope signingEnvelope2 = jsonMapper.readValue(
+                    RESOURCE_DIRECTORY.resolve("payment.skey").toFile(),
+                    KeyTextEnvelope.class
+            );
+            final Key signingKey2 = Key.fromTextEnvelope(signingEnvelope2);
+            MetadataCreator.signMetadata(metadata, signingKey2);
+
+            // Tamper with the second signature
+            final String tamperedSignature = "0" + metadata.getProperty(ValidationField.NAME)
+                    .getSignatures().get(1).getSignature().substring(1);
+            metadata.getProperty(ValidationField.NAME).getSignatures().get(1).setSignature(tamperedSignature);
+
+            // Validate without key (checks all signatures)
+            final ValidationResult result = MetadataCreator.validateMetadata(metadata);
+
+            assertThat(result.isValid()).isFalse();
+            assertThat(result.getValidationErrors()).isNotEmpty();
+            assertThat(result.getValidationErrors().toString()).contains("signature verification failed");
+        }
+
+        @Test
+        @DisplayName("Should handle signing same property twice with same key")
+        void shouldHandleSigningSamePropertyTwiceWithSameKey() throws IOException {
+            final Metadata metadata = new Metadata("test", policyScript);
+            metadata.addProperty(ValidationField.NAME, new MetadataProperty<>("Test Token", 0, null));
+            metadata.addProperty(ValidationField.DESCRIPTION, new MetadataProperty<>("Test Description", 0, null));
+
+            // Sign twice with same key
+            MetadataCreator.signMetadata(metadata, signingKey);
+            MetadataCreator.signMetadata(metadata, signingKey);
+
+            // Should only have 1 signature (not duplicated)
+            assertThat(metadata.getProperty(ValidationField.NAME).getSignatures()).hasSize(1);
+            assertThat(metadata.getProperty(ValidationField.DESCRIPTION).getSignatures()).hasSize(1);
+
+            final ValidationResult result = MetadataCreator.validateMetadata(metadata, verificationKey);
+            assertThat(result.isValid()).isTrue();
         }
     }
 

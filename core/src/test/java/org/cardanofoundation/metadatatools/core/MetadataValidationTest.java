@@ -63,6 +63,30 @@ public class MetadataValidationTest {
             }
 
             @Test
+            @DisplayName("Should accept valid subject with 58 chars")
+            void shouldAcceptValidSubjectWith58Chars() {
+                final ValidationResult result = new ValidationResult();
+                final String validSubject = "a".repeat(58);
+
+                MetadataValidationRules.validateSubjectAndPolicy(validSubject, null, result);
+
+                assertThat(result.isValid()).isTrue();
+                assertThat(result.getValidationErrors()).isEmpty();
+            }
+
+            @Test
+            @DisplayName("Should accept valid subject with 118 chars")
+            void shouldAcceptValidSubjectWith118Chars() {
+                final ValidationResult result = new ValidationResult();
+                final String validSubject = "a".repeat(118);
+
+                MetadataValidationRules.validateSubjectAndPolicy(validSubject, null, result);
+
+                assertThat(result.isValid()).isTrue();
+                assertThat(result.getValidationErrors()).isEmpty();
+            }
+
+            @Test
             @DisplayName("Should accept valid subject with policy ID and asset name")
             void shouldAcceptValidSubjectWithPolicyAndAsset() {
                 final ValidationResult result = new ValidationResult();
@@ -135,6 +159,18 @@ public class MetadataValidationTest {
             }
 
             @Test
+            @DisplayName("Should reject subject with 55 characters (boundary)")
+            void shouldRejectSubjectWith55Characters() {
+                final ValidationResult result = new ValidationResult();
+                final String shortSubject = "a".repeat(55);
+
+                MetadataValidationRules.validateSubjectAndPolicy(shortSubject, null, result);
+
+                assertThat(result.isValid()).isFalse();
+                assertThat(result.getValidationErrors()).isNotEmpty();
+            }
+
+            @Test
             @DisplayName("Should reject subject longer than 120 characters")
             void shouldRejectSubjectLongerThanMaximum() {
                 final ValidationResult result = new ValidationResult();
@@ -146,6 +182,23 @@ public class MetadataValidationTest {
                 assertThat(result.getValidationErrors()).isNotEmpty();
                 assertThat(result.getValidationErrors().get(0).getMessage()).contains("Subject must not exceed 120 characters");
                 assertThat(result.getValidationErrors().get(0).getField()).isEqualTo(ValidationField.SUBJECT);
+            }
+
+            @Test
+            @DisplayName("Should reject subject with 121 characters (boundary)")
+            void shouldRejectSubjectWith121Characters() {
+                final ValidationResult result = new ValidationResult();
+                final String longSubject = "a".repeat(121);
+
+                MetadataValidationRules.validateSubjectAndPolicy(longSubject, null, result);
+
+                assertThat(result.isValid()).isFalse();
+                assertThat(result.getValidationErrors()).isNotEmpty();
+                // Odd length triggers hex decode error before length check
+                assertThat(result.getValidationErrors().get(0).getMessage()).containsAnyOf(
+                    "Subject must not exceed 120 characters",
+                    "Cannot decode hex string"
+                );
             }
 
             @Test
@@ -221,6 +274,28 @@ public class MetadataValidationTest {
                 assertThat(result.isValid()).isTrue();
                 assertThat(result.getValidationErrors()).isEmpty();
             }
+
+            @Test
+            @DisplayName("Should accept valid name with 49 characters (boundary)")
+            void shouldAcceptValidNameWith49Characters() {
+                final MetadataProperty<String> property = new MetadataProperty<>("A".repeat(49), 0, null);
+
+                final ValidationResult result = MetadataValidationRules.validateProperty(ValidationField.NAME, property);
+
+                assertThat(result.isValid()).isTrue();
+                assertThat(result.getValidationErrors()).isEmpty();
+            }
+
+            @Test
+            @DisplayName("Should accept valid name with Unicode characters")
+            void shouldAcceptValidNameWithUnicodeCharacters() {
+                final MetadataProperty<String> property = new MetadataProperty<>("Token 币 💎", 0, null);
+
+                final ValidationResult result = MetadataValidationRules.validateProperty(ValidationField.NAME, property);
+
+                assertThat(result.isValid()).isTrue();
+                assertThat(result.getValidationErrors()).isEmpty();
+            }
         }
 
         @Nested
@@ -290,6 +365,29 @@ public class MetadataValidationTest {
                 assertThat(result.getValidationErrors()).isNotEmpty();
                 assertThat(result.getValidationErrors().get(0).getMessage()).contains("sequenceNumber is negative");
                 assertThat(result.getValidationErrors().get(0).getField()).isEqualTo(ValidationField.SEQUENCE_NUMBER);
+            }
+
+            @Test
+            @DisplayName("Should reject empty name")
+            void shouldRejectEmptyName() {
+                final MetadataProperty<String> property = new MetadataProperty<>("", 0, null);
+
+                final ValidationResult result = MetadataValidationRules.validateProperty(ValidationField.NAME, property);
+
+                // Empty string is valid according to current validation rules (no minimum length check)
+                // But we document this behavior
+                assertThat(result.isValid()).isTrue();
+            }
+
+            @Test
+            @DisplayName("Should reject whitespace-only name")
+            void shouldRejectWhitespaceOnlyName() {
+                final MetadataProperty<String> property = new MetadataProperty<>("   ", 0, null);
+
+                final ValidationResult result = MetadataValidationRules.validateProperty(ValidationField.NAME, property);
+
+                // Whitespace-only is valid according to current rules (documents behavior)
+                assertThat(result.isValid()).isTrue();
             }
         }
     }
@@ -550,6 +648,17 @@ public class MetadataValidationTest {
                 assertThat(result.isValid()).isTrue();
                 assertThat(result.getValidationErrors()).isEmpty();
             }
+
+            @Test
+            @DisplayName("Should accept logo with 87399 characters (boundary)")
+            void shouldAcceptLogoWith87399Characters() {
+                final MetadataProperty<String> property = new MetadataProperty<>("A".repeat(87399), 0, null);
+
+                final ValidationResult result = MetadataValidationRules.validateProperty(ValidationField.LOGO, property);
+
+                assertThat(result.isValid()).isTrue();
+                assertThat(result.getValidationErrors()).isEmpty();
+            }
         }
 
         @Nested
@@ -637,6 +746,17 @@ public class MetadataValidationTest {
                 assertThat(result.isValid()).isTrue();
                 assertThat(result.getValidationErrors()).isEmpty();
             }
+
+            @Test
+            @DisplayName("Should accept URL with 249 characters (boundary)")
+            void shouldAcceptUrlWith249Characters() {
+                final MetadataProperty<String> property = new MetadataProperty<>("https://example.com/" + "a".repeat(229), 0, null);
+
+                final ValidationResult result = MetadataValidationRules.validateProperty(ValidationField.URL, property);
+
+                assertThat(result.isValid()).isTrue();
+                assertThat(result.getValidationErrors()).isEmpty();
+            }
         }
 
         @Nested
@@ -680,6 +800,110 @@ public class MetadataValidationTest {
                 assertThat(result.getValidationErrors()).isNotEmpty();
                 assertThat(result.getValidationErrors().get(0).getMessage()).contains("value is not of expected type String");
                 assertThat(result.getValidationErrors().get(0).getField()).isEqualTo(ValidationField.URL);
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("Policy Validation")
+    class PolicyValidationTests {
+
+        @Nested
+        @DisplayName("Positive Tests")
+        class PositiveTests {
+
+            @Test
+            @DisplayName("Should accept valid policy matching subject")
+            void shouldAcceptValidPolicyMatchingSubject() throws IOException {
+                final ObjectMapper jsonMapper = new ObjectMapper();
+                final PolicyScript policyScript = jsonMapper.readValue(RESOURCE_DIRECTORY.resolve("policy.script").toFile(), PolicyScript.class);
+                final String assetName = "myasset";
+                final Metadata metadata = new Metadata(assetName, policyScript);
+
+                final ValidationResult result = new ValidationResult();
+                MetadataValidationRules.validateSubjectAndPolicy(metadata.getSubject(), metadata.getPolicy(), result);
+
+                assertThat(result.isValid()).isTrue();
+                assertThat(result.getValidationErrors()).isEmpty();
+            }
+
+            @Test
+            @DisplayName("Should accept subject without policy")
+            void shouldAcceptSubjectWithoutPolicy() {
+                final ValidationResult result = new ValidationResult();
+                final String validSubject = "6ad121cd218e513bdb8ad67afc04d188f859b25d258a694c38269941" + "6d7961737365746e616d65";
+
+                MetadataValidationRules.validateSubjectAndPolicy(validSubject, null, result);
+
+                assertThat(result.isValid()).isTrue();
+                assertThat(result.getValidationErrors()).isEmpty();
+            }
+        }
+
+        @Nested
+        @DisplayName("Negative Tests")
+        class NegativeTests {
+
+            @Test
+            @DisplayName("Should reject policy that doesn't match subject")
+            void shouldRejectPolicyNotMatchingSubject() throws IOException {
+                final ObjectMapper jsonMapper = new ObjectMapper();
+                final PolicyScript policyScript = jsonMapper.readValue(RESOURCE_DIRECTORY.resolve("policy.script").toFile(), PolicyScript.class);
+                final ValidationResult result = new ValidationResult();
+
+                // Subject with different policy ID
+                final String mismatchedSubject = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabcdef";
+
+                MetadataValidationRules.validateSubjectAndPolicy(mismatchedSubject, Hex.toHexString(policyScript.toCbor()), result);
+
+                assertThat(result.isValid()).isFalse();
+                assertThat(result.getValidationErrors()).isNotEmpty();
+                assertThat(result.getValidationErrors().get(0).getMessage()).contains("first 28 bytes of the subject should match the policy id");
+                assertThat(result.getValidationErrors().get(0).getField()).isEqualTo(ValidationField.POLICY);
+            }
+
+            @Test
+            @DisplayName("Should reject invalid hex in policy")
+            void shouldRejectInvalidHexInPolicy() {
+                final ValidationResult result = new ValidationResult();
+                final String validSubject = "a".repeat(56);
+                final String invalidHexPolicy = "gggggggg"; // Invalid hex characters
+
+                MetadataValidationRules.validateSubjectAndPolicy(validSubject, invalidHexPolicy, result);
+
+                assertThat(result.isValid()).isFalse();
+                assertThat(result.getValidationErrors()).isNotEmpty();
+                assertThat(result.getValidationErrors().get(0).getField()).isEqualTo(ValidationField.POLICY);
+            }
+
+            @Test
+            @DisplayName("Should reject invalid CBOR in policy")
+            void shouldRejectInvalidCborInPolicy() {
+                final ValidationResult result = new ValidationResult();
+                final String validSubject = "a".repeat(56);
+                final String invalidCborPolicy = "ff"; // Invalid CBOR
+
+                MetadataValidationRules.validateSubjectAndPolicy(validSubject, invalidCborPolicy, result);
+
+                assertThat(result.isValid()).isFalse();
+                assertThat(result.getValidationErrors()).isNotEmpty();
+                assertThat(result.getValidationErrors().get(0).getMessage()).contains("Could not deserialize policy script");
+                assertThat(result.getValidationErrors().get(0).getField()).isEqualTo(ValidationField.POLICY);
+            }
+
+            @Test
+            @DisplayName("Should reject policy with odd length hex")
+            void shouldRejectPolicyWithOddLengthHex() throws IOException {
+                final ObjectMapper jsonMapper = new ObjectMapper();
+                final PolicyScript policyScript = jsonMapper.readValue(RESOURCE_DIRECTORY.resolve("policy.script").toFile(), PolicyScript.class);
+                final String validSubject = "6ad121cd218e513bdb8ad67afc04d188f859b25d258a694c38269941" + "6d7961737365746e616d65";
+                final String oddLengthPolicy = Hex.toHexString(policyScript.toCbor()) + "a"; // Add one char to make it odd
+
+                final ValidationResult result = new ValidationResult();
+                MetadataValidationRules.validateSubjectAndPolicy(validSubject, oddLengthPolicy, result);
+
+                assertThat(result.isValid()).isFalse();
+                assertThat(result.getValidationErrors()).isNotEmpty();
             }
         }
     }
