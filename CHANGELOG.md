@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0](https://github.com/cardano-foundation/cf-tokens-cip26/compare/v1.1.0...v2.0.0) (2025-10-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* update release-please to v4
+
+### Features
+
+* migrate to new release-please action ([8cbb27b](https://github.com/cardano-foundation/cf-tokens-cip26/commit/8cbb27bf66dad394775b456b9a2c3a40e2e99513))
+* update release-please to v4 ([2b1e4df](https://github.com/cardano-foundation/cf-tokens-cip26/commit/2b1e4dfe2f28d374c6367ae0215258552ae07431))
+
+
+### Bug Fixes
+
+* ensure badges branch exists before committing ([09a616f](https://github.com/cardano-foundation/cf-tokens-cip26/commit/09a616f239ba1643d6a92f71c84cd4de302dc158))
+* specify target branch for badges push in workflow ([1b7bac7](https://github.com/cardano-foundation/cf-tokens-cip26/commit/1b7bac73f66211cc365216e39446a180d48782be))
+
+
+### Miscellaneous Chores
+
+* release 2.0.0 ([bb1af2e](https://github.com/cardano-foundation/cf-tokens-cip26/commit/bb1af2ef617066773522932338af275c23f2a58b))
+
 ## [2.0.0]
 
 ### Breaking Changes
