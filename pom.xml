@@ -59,6 +59,7 @@
     <properties>
         <revision>2.0.0-SNAPSHOT</revision>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <version.maven-deploy-plugin>3.1.4</version.maven-deploy-plugin>
         <version.maven-compiler-plugin>3.13.0</version.maven-compiler-plugin>
         <version.maven-surefire-plugin>3.2.5</version.maven-surefire-plugin>
         <version.jacoco-maven-plugin>0.8.12</version.jacoco-maven-plugin>
@@ -201,6 +202,15 @@
             </plugins>
         </pluginManagement>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>${version.maven-deploy-plugin}</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+                <inherited>false</inherited>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
