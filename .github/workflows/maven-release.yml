@@ -17,9 +17,9 @@ jobs:
 
       - name: 🚀 release-please-action
         id: release
-        uses: google-github-actions/release-please-action@v4
+        uses: googleapis/release-please-action@v4
         with:
-          release-type: pom
+          release-type: maven
 
       - name: Checkout
         uses: actions/checkout@v3
