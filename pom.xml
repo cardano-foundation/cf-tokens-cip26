@@ -260,7 +260,7 @@
                             <maven>
                                 <mavenCentral>
                                     <sonatype>
-                                        <active>ALWAYS</active>
+                                        <active>RELEASE</active>
                                         <url>https://central.sonatype.com/api/v1/publisher</url>
                                         <applyMavenCentralRules>true</applyMavenCentralRules>
                                         <stagingRepositories>target/staging-deploy</stagingRepositories>
