@@ -47,9 +47,9 @@ jobs:
       - name: Decode GPG Key
         if: ${{ steps.release.outputs.release_created }}
         run: |
-          mkdir -p ~/.gradle/
-          echo "${{secrets.MAVEN_CENTRAL_GPG_KEY}}" > ~/.m2/secring.gpg
-          echo "${{secrets.MAVEN_CENTRAL_GPG_PASSPHRASE}}" | gpg --batch --yes --passphrase-fd 0 --import ~/.m2/secring.gpg
+          mkdir -p ~/.m2/
+          echo "${{ secrets.MAVEN_CENTRAL_GPG_PRIVATE_KEY }}" > ~/.m2/secring.gpg
+          echo "${{ secrets.MAVEN_CENTRAL_GPG_PASSPHRASE }}" | gpg --batch --yes --passphrase-fd 0 --import ~/.m2/secring.gpg
           gpg --keyserver hkps://keys.openpgp.org --send-key BEFB6B63A980310BB92A65365E362818AF79A015
 
       - name: Build and deploy to local repo
