@@ -3,24 +3,22 @@ package org.cardanofoundation.metadatatools.core.cip26;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.math.ec.rfc8032.Ed25519;
 import org.bouncycastle.util.encoders.Hex;
+import org.cardanofoundation.metadatatools.core.cip26.model.AttestationSignature;
 import org.cardanofoundation.metadatatools.core.cip26.model.Metadata;
+import org.cardanofoundation.metadatatools.core.cip26.model.MetadataProperty;
 import org.cardanofoundation.metadatatools.core.crypto.Hashing;
 import org.cardanofoundation.metadatatools.core.crypto.keys.Key;
-import org.cardanofoundation.metadatatools.core.cip26.model.AttestationSignature;
-import org.cardanofoundation.metadatatools.core.cip26.model.PolicyScript;
-import org.cardanofoundation.metadatatools.core.cip26.model.MetadataProperty;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
 
-
-@Log4j2
+@Slf4j
 public class MetadataCreator {
+
     public static ValidationResult validateMetadata(final Metadata metadata) {
         return validateMetadata(metadata, null, false);
     }
@@ -52,27 +50,29 @@ public class MetadataCreator {
                         Hashing.blake2b256Digest(objectMapper.writeValueAsBytes(entry.getKey())),
                         Hashing.blake2b256Digest(objectMapper.writeValueAsBytes(entry.getValue().getValue())),
                         Hashing.blake2b256Digest(objectMapper.writeValueAsBytes(entry.getValue().getSequenceNumber()))));
-                for (final AttestationSignature attestationSignature : entry.getValue().getSignatures()) {
-                    if (verificationKey != null) {
-                        if (attestationSignature.getPublicKey().equals(Hex.toHexString(verificationKey.getRawKeyBytes()))) {
-                            final byte[] signatureRaw = Hex.decode(attestationSignature.getSignature());
-                            final boolean result = Ed25519.verify(signatureRaw, 0, verificationKey.getRawKeyBytes(), 0, propertyHash, 0, propertyHash.length);
-                            if (!result) {
-                                validationResult.addValidationError(String.format("property %s: signature verification failed for key %s.", entry.getKey(), attestationSignature.getPublicKey()));
+                if (entry.getValue().getSignatures() != null && !entry.getValue().getSignatures().isEmpty()) {
+                    for (final AttestationSignature attestationSignature : entry.getValue().getSignatures()) {
+                        if (verificationKey != null) {
+                            if (attestationSignature.getPublicKey().equals(Hex.toHexString(verificationKey.getRawKeyBytes()))) {
+                                final byte[] signatureRaw = Hex.decode(attestationSignature.getSignature());
+                                final boolean result = Ed25519.verify(signatureRaw, 0, verificationKey.getRawKeyBytes(), 0, propertyHash, 0, propertyHash.length);
+                                if (!result) {
+                                    validationResult.addValidationError(ValidationField.SIGNATURE, String.format("property %s: signature verification failed for key %s.", entry.getKey(), attestationSignature.getPublicKey()));
+                                }
+                                break;
                             }
-                            break;
-                        }
-                    } else {
-                        final byte[] signatureRaw = Hex.decode(attestationSignature.getSignature());
-                        final boolean result = Ed25519.verify(signatureRaw, 0, Hex.decode(attestationSignature.getPublicKey()), 0, propertyHash, 0, propertyHash.length);
-                        if (!result) {
-                            validationResult.addValidationError(String.format("property %s: signature verification failed for key %s.", entry.getKey(), attestationSignature.getPublicKey()));
+                        } else {
+                            final byte[] signatureRaw = Hex.decode(attestationSignature.getSignature());
+                            final boolean result = Ed25519.verify(signatureRaw, 0, Hex.decode(attestationSignature.getPublicKey()), 0, propertyHash, 0, propertyHash.length);
+                            if (!result) {
+                                validationResult.addValidationError(ValidationField.SIGNATURE, String.format("property %s: signature verification failed for key %s.", entry.getKey(), attestationSignature.getPublicKey()));
+                            }
                         }
                     }
                 }
             }
         } catch (final IOException e) {
-            validationResult.addValidationError("Could not verify due to an internal error: " + e.getMessage());
+            validationResult.addValidationError(ValidationField.GENERAL, "Could not verify due to an internal error: " + e.getMessage());
         }
 
         return validationResult;
@@ -84,25 +84,25 @@ public class MetadataCreator {
         if (resultForLatest.isValid() && resultForBase.isValid()) {
             final ValidationResult validationResult = new ValidationResult();
             if (!latest.getSubject().equalsIgnoreCase(base.getSubject())) {
-                validationResult.addValidationError("Subject of updated metadata differs from subject of base metadata.");
+                validationResult.addValidationError(ValidationField.SUBJECT, "Subject of updated metadata differs from subject of base metadata.");
             }
             if (!latest.getPolicy().equalsIgnoreCase(base.getPolicy())) {
-                validationResult.addValidationError("Policy of updated metadata differs from policy of base metadata.");
+                validationResult.addValidationError(ValidationField.POLICY, "Policy of updated metadata differs from policy of base metadata.");
             }
             latest.getProperties().forEach((propertyKey, propertyValue) -> {
                 if (base.getProperties().containsKey(propertyKey)) {
                     final MetadataProperty<?> baseProperty = base.getProperties().get(propertyKey);
                     if (baseProperty.getSequenceNumber() >= propertyValue.getSequenceNumber()) {
-                        validationResult.addValidationError(String.format(
+                        validationResult.addValidationError(ValidationField.SEQUENCE_NUMBER, String.format(
                                 "Sequence number (%d) for property %s is not greater than the sequence number (%d) of the base property.",
                                 propertyValue.getSequenceNumber(), propertyKey, baseProperty.getSequenceNumber()));
                     }
                 }
             });
             return validationResult;
-        } else {
-            return ValidationResult.mergeResults(List.of(resultForBase, resultForLatest));
         }
+
+        return ValidationResult.mergeResults(List.of(resultForBase, resultForLatest));
     }
 
     private static void signMetadataProperty(final MetadataProperty<?> property, final Key signingKey, final Key verificationKey, final byte[] subjectHash, final byte[] propertyNameHash) {
@@ -188,4 +188,5 @@ public class MetadataCreator {
 
         input.getProperties().forEach((key, value) -> signMetadata(input, signingKey, key));
     }
+
 }

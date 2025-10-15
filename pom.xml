@@ -4,21 +4,21 @@
 
     <groupId>org.cardanofoundation.metadatatools</groupId>
     <artifactId>core-base</artifactId>
-    <version>1.1.0</version>
+    <version>2.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>${project.groupId}:${project.artifactId}</name>
-    <description>CF Metadata Core</description>
-    <url>https://github.com/cardano-foundation/cf-metadata-core.git</url>
+    <description>CIP-26 Cardano Token Metadata Utility Library</description>
+    <url>https://github.com/cardano-foundation/cf-tokens-cip26</url>
 
     <scm>
-        <connection>scm:git:git://github.com/cardano-foundation/cf-metadata-core.git</connection>
-        <url>https://github.com/cardano-foundation/cf-metadata-core</url>
-        <developerConnection>scm:git:git://github.com/cardano-foundation/cf-metadata-core.git</developerConnection>
+        <connection>scm:git:git://github.com/cardano-foundation/cf-tokens-cip26.git</connection>
+        <url>https://github.com/cardano-foundation/cf-tokens-cip26</url>
+        <developerConnection>scm:git:git://github.com/cardano-foundation/cf-tokens-cip26.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
     <issueManagement>
-        <url>https://github.com/cardano-foundation/cf-metadata-core/issues</url>
+        <url>https://github.com/cardano-foundation/cf-tokens-cip26/issues</url>
         <system>GitHub Issues</system>
     </issueManagement>
 
@@ -32,7 +32,20 @@
 
     <developers>
         <developer>
-            <name>CF Metadata Team</name>
+            <name>Sebastian Bode</name>
+            <email>sebastian.bode@cardanofoundation.org</email>
+            <organization>Cardano Foundation</organization>
+            <organizationUrl>https://cardanofoundation.org</organizationUrl>
+        </developer>
+        <developer>
+            <name>Giovanni Gargiulo</name>
+            <email>giovanni.gargiulo@cardanofoundation.org</email>
+            <organization>Cardano Foundation</organization>
+            <organizationUrl>https://cardanofoundation.org</organizationUrl>
+        </developer>
+        <developer>
+            <name>Mateusz Czeladka</name>
+            <email>mateusz.czeladka@cardanofoundation.org</email>
             <organization>Cardano Foundation</organization>
             <organizationUrl>https://cardanofoundation.org</organizationUrl>
         </developer>
@@ -44,36 +57,44 @@
     </organization>
 
     <properties>
-        <revision>1.0.0-SNAPSHOT</revision>
+        <revision>2.0.0-SNAPSHOT</revision>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <version.maven-compiler-plugin>3.10.0</version.maven-compiler-plugin>
-        <verison.maven-surefire-plugin>3.0.0-M5</verison.maven-surefire-plugin>
-        <verison.jacoco-maven-plugin>0.8.8</verison.jacoco-maven-plugin>
-        <version.flatten-maven-plugin>1.2.7</version.flatten-maven-plugin>
-        <version.maven-pmd-plugin>3.17.0</version.maven-pmd-plugin>
-        <version.maven-project-info-reports-plugin>3.3.0</version.maven-project-info-reports-plugin>
-        <version.maven-site-plugin>4.0.0-M2</version.maven-site-plugin>
-        <version.lombok>1.18.22</version.lombok>
-        <version.bouncycastle>1.70</version.bouncycastle>
-        <version.log4j>2.17.2</version.log4j>
-        <version.jackson>2.13.2</version.jackson>
-        <version.junit-jupiter>5.8.2</version.junit-jupiter>
-        <version.assertj>3.22.0</version.assertj>
-        <version.mockito>4.5.1</version.mockito>
-        <version.hamcrest>2.2</version.hamcrest>
+        <version.maven-compiler-plugin>3.13.0</version.maven-compiler-plugin>
+        <version.maven-surefire-plugin>3.2.5</version.maven-surefire-plugin>
+        <version.jacoco-maven-plugin>0.8.12</version.jacoco-maven-plugin>
+        <version.flatten-maven-plugin>1.6.0</version.flatten-maven-plugin>
+        <version.maven-pmd-plugin>3.25.0</version.maven-pmd-plugin>
+        <version.maven-project-info-reports-plugin>3.6.2</version.maven-project-info-reports-plugin>
+        <version.maven-site-plugin>4.0.0-M13</version.maven-site-plugin>
+        <version.maven-javadoc-plugin>3.10.1</version.maven-javadoc-plugin>
+        <version.maven-source-plugin>3.3.1</version.maven-source-plugin>
+        <version.lombok>1.18.40</version.lombok>
+        <version.bouncycastle>1.78.1</version.bouncycastle>
+        <version.slf4j>2.0.16</version.slf4j>
+        <version.logback>1.5.8</version.logback>
+        <version.jackson>2.17.2</version.jackson>
+        <version.junit-jupiter>5.10.3</version.junit-jupiter>
+        <version.assertj>3.26.3</version.assertj>
+        <version.mockito>5.13.0</version.mockito>
+        <version.hamcrest>3.0</version.hamcrest>
     </properties>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>org.bouncycastle</groupId>
-                <artifactId>bcprov-jdk15on</artifactId>
+                <artifactId>bcprov-jdk18on</artifactId>
                 <version>${version.bouncycastle}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.logging.log4j</groupId>
-                <artifactId>log4j-core</artifactId>
-                <version>${version.log4j}</version>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${version.slf4j}</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${version.logback}</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
@@ -120,27 +141,39 @@
 
     <profiles>
         <profile>
-            <id>ci-cd</id>
+            <id>local-repo</id>
+            <properties>
+                <altDeploymentRepository>local::file:./target/staging-deploy</altDeploymentRepository>
+            </properties>
             <build>
+                <defaultGoal>deploy</defaultGoal>
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
+                        <artifactId>maven-javadoc-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
+                                <id>attach-javadocs</id>
                                 <goals>
-                                    <goal>sign</goal>
+                                    <goal>jar</goal>
                                 </goals>
                                 <configuration>
-                                    <!-- Prevent gpg from using pinentry programs. Fixes: gpg: signing
-                                        failed: Inappropriate ioctl for device -->
-                                    <gpgArguments>
-                                        <arg>--pinentry-mode</arg>
-                                        <arg>loopback</arg>
-                                    </gpgArguments>
+                                    <attach>true</attach>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                                <configuration>
+                                    <attach>true</attach>
                                 </configuration>
                             </execution>
                         </executions>
@@ -152,16 +185,21 @@
 
     <distributionManagement>
         <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+            <id>maven-central-snapshots</id>
+            <url>https://central.sonatype.com/repository/maven-snapshots/</url>
         </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2</url>
-        </repository>
     </distributionManagement>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.jreleaser</groupId>
+                    <artifactId>jreleaser-maven-plugin</artifactId>
+                    <version>1.19.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
@@ -207,6 +245,32 @@
                     <tagNameFormat>@{project.version}</tagNameFormat>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.jreleaser</groupId>
+                <artifactId>jreleaser-maven-plugin</artifactId>
+                <configuration>
+                    <jreleaser>
+                        <signing>
+                            <active>ALWAYS</active>
+                            <armored>true</armored>
+                            <mode>COMMAND</mode>
+                            <verify>true</verify>
+                        </signing>
+                        <deploy>
+                            <maven>
+                                <mavenCentral>
+                                    <sonatype>
+                                        <active>ALWAYS</active>
+                                        <url>https://central.sonatype.com/api/v1/publisher</url>
+                                        <applyMavenCentralRules>true</applyMavenCentralRules>
+                                        <stagingRepositories>target/staging-deploy</stagingRepositories>
+                                    </sonatype>
+                                </mavenCentral>
+                            </maven>
+                        </deploy>
+                    </jreleaser>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -220,7 +284,7 @@
                     <linkXRef>false</linkXRef>
                     <sourceEncoding>utf-8</sourceEncoding>
                     <minimumTokens>100</minimumTokens>
-                    <targetJdk>18</targetJdk>
+                    <targetJdk>21</targetJdk>
                     <excludes>
                         <exclude>**/*Bean.java</exclude>
                         <exclude>**/generated/*.java</exclude>
