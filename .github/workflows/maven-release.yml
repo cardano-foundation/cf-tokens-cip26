@@ -16,6 +16,7 @@ jobs:
     steps:
 
       - name: 🚀 release-please-action
+        id: release
         uses: google-github-actions/release-please-action@v3
         with:
           release-type: maven
@@ -24,9 +25,11 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v3
+        if: ${{ steps.release.outputs.release_created }}
 
       - name: Set up Maven Central Repository
         uses: actions/setup-java@v4
+        if: ${{ steps.release.outputs.release_created }}
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -37,21 +40,25 @@ jobs:
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
       - name: GPG checks
+        if: ${{ steps.release.outputs.release_created }}
         run: |
           which gpg
           gpg --version
 
       - name: Decode GPG Key
+        if: ${{ steps.release.outputs.release_created }}
         run: |
           mkdir -p ~/.gradle/
-          echo "${{secrets.MAVEN_CENTRAL_GPG_KEY}}" > $TMPDIR/secring.gpg
-          echo "${{secrets.MAVEN_CENTRAL_GPG_PASSPHRASE}}" | gpg --batch --yes --passphrase-fd 0 --import $TMPDIR/secring.gpg
+          echo "${{secrets.MAVEN_CENTRAL_GPG_KEY}}" > ~/.m2/secring.gpg
+          echo "${{secrets.MAVEN_CENTRAL_GPG_PASSPHRASE}}" | gpg --batch --yes --passphrase-fd 0 --import ~/.m2/secring.gpg
           gpg --keyserver hkps://keys.openpgp.org --send-key BEFB6B63A980310BB92A65365E362818AF79A015
 
       - name: Build and deploy to local repo
+        if: ${{ steps.release.outputs.release_created }}
         run: "mvn clean deploy --batch-mode -DskipTests -Plocal-repo"
 
       - name: Maven Central release
+        if: ${{ steps.release.outputs.release_created }}
         run: "mvn jreleaser:deploy"
         env:
           JRELEASER_GPG_PASSPHRASE: ${{ secrets.MAVEN_CENTRAL_GPG_PASSPHRASE }}
