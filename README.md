@@ -30,26 +30,26 @@ The library is published to Maven Central and can be used with any JVM build too
 <dependency>
     <groupId>org.cardanofoundation.metadatatools</groupId>
     <artifactId>cf-tokens-cip26</artifactId>
-    <version>2.0.0-SNAPSHOT</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
 #### Gradle
 
 ```groovy
-implementation 'org.cardanofoundation.metadatatools:cf-tokens-cip26:2.0.0-SNAPSHOT'
+implementation 'org.cardanofoundation.metadatatools:cf-tokens-cip26:2.0.0'
 ```
 
 #### Gradle (Kotlin DSL)
 
 ```kotlin
-implementation("org.cardanofoundation.metadatatools:cf-tokens-cip26:2.0.0-SNAPSHOT")
+implementation("org.cardanofoundation.metadatatools:cf-tokens-cip26:2.0.0")
 ```
 
 #### SBT
 
 ```scala
-libraryDependencies += "org.cardanofoundation.metadatatools" % "cf-tokens-cip26" % "2.0.0-SNAPSHOT"
+libraryDependencies += "org.cardanofoundation.metadatatools" % "cf-tokens-cip26" % "2.0.0"
 ```
 
 ### Quick Start Example
