@@ -17,11 +17,9 @@ jobs:
 
       - name: 🚀 release-please-action
         id: release
-        uses: google-github-actions/release-please-action@v3
+        uses: google-github-actions/release-please-action@v4
         with:
-          release-type: maven
-          bump-minor-pre-major: true
-          bump-patch-for-minor-pre-major: true
+          release-type: pom
 
       - name: Checkout
         uses: actions/checkout@v3
